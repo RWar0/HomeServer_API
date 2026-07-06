@@ -40,6 +40,7 @@ namespace HomeServer.Application.Services.Auth
 
             Claim[] claims = [
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Role, user.Role.ToString()),
                 new(ClaimTypes.Name, user.Username),
             ];
 
@@ -60,6 +61,7 @@ namespace HomeServer.Application.Services.Auth
 
             Claim[] claims = [
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Role, user.Role.ToString()),
                 new(ClaimTypes.Name, user.Username),
             ];
 

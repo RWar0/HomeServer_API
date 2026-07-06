@@ -26,7 +26,7 @@ namespace HomeServer.Application.Services.Auth
 
             // Get and Validate user
             var user = await _context.Users
-                    .Where(item => item.Username.Equals(loginUserDto.Login))
+                    .Where(item => item.Username.Equals(loginUserDto.Login) && item.DeletedAt == null)
                     .FirstOrDefaultAsync();
 
             if (user is null)
@@ -61,6 +61,7 @@ namespace HomeServer.Application.Services.Auth
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
+                Role = user.Role.ToString(),
             });
         }
 

@@ -36,7 +36,8 @@ namespace HomeServer.Application.Services.Users
                 .Select(item => new UserMyProfileDto()
                 {
                     Email = item.Email,
-                    Name = item.Name
+                    Name = item.Name,
+                    Role = item.Role.ToString(),
                 })
                 .FirstOrDefaultAsync();
 
