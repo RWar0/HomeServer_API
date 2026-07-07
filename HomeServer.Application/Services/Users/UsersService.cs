@@ -44,7 +44,7 @@ namespace HomeServer.Application.Services.Users
 
             if (user == null)
             {
-                return Result<UserMyProfileDto>.Failure("Brak użytkownika o podanym identyfikatorze!");
+                return Result.Failure("Brak użytkownika o podanym identyfikatorze!");
             }
 
             _cache.Set(cacheKey, user, new MemoryCacheEntryOptions

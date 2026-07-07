@@ -32,13 +32,13 @@ namespace HomeServer.Application.Services.Auth
 
             if (user is null)
             {
-                return Result<LoginResponseDto>.Failure("Niepoprawny login lub/i hasło!");
+                return Result.Failure("Niepoprawny login lub/i hasło!");
             }
 
 
             if (!_passwordHasher.IsPasswordValid(loginUserDto.Password, user.Password))
             {
-                return Result<LoginResponseDto>.Failure("Niepoprawny login lub/i hasło!");
+                return Result.Failure("Niepoprawny login lub/i hasło!");
             }
 
             // Generate access and refresh tokens
@@ -75,10 +75,10 @@ namespace HomeServer.Application.Services.Auth
                 userId = _jwtService.GetUserIdFromRefreshToken(refreshSessionDto.RefreshToken);
             } catch (SecurityTokenException)
             {
-                return Result<RefreshSessionResponseDto>.Failure("Niepoprawna sesja!");
+                return Result.Failure("Niepoprawna sesja!");
             } catch (UnauthorizedAccessException)
             {
-                return Result<RefreshSessionResponseDto>.Failure("Niepoprawna sesja!");
+                return Result.Failure("Niepoprawna sesja!");
             }
 
             // Get hash of current refresh token
@@ -97,7 +97,7 @@ namespace HomeServer.Application.Services.Auth
 
             if (session is null)
             {
-                return Result<RefreshSessionResponseDto>.Failure("Niepoprawna sesja!");
+                return Result.Failure("Niepoprawna sesja!");
             }
 
             // Revoke session - invalidates old and insert new
@@ -159,7 +159,7 @@ namespace HomeServer.Application.Services.Auth
 
             if (session is null)
             {
-                return Result<string>.Failure("Niepoprawna sesja!");
+                return Result.Failure("Niepoprawna sesja!");
             }
 
             session.RevokedAt = DateTime.UtcNow;
