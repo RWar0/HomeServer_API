@@ -1,4 +1,4 @@
-﻿namespace HomeServer.Domain.Dtos.Users
+﻿namespace HomeServer.Application.Dtos.Users
 {
     public class UserMyProfileDto
     {

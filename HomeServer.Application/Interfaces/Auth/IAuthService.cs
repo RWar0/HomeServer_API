@@ -1,5 +1,5 @@
 ﻿using HomeServer.Application.Common.Results;
-using HomeServer.Domain.Dtos.Auth;
+using HomeServer.Application.Dtos.Auth;
 
 namespace HomeServer.Application.Interfaces.Auth
 {

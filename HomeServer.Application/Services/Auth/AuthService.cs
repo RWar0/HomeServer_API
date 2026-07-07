@@ -1,12 +1,13 @@
 ﻿using System.Text;
 using HomeServer.Application.Base;
 using HomeServer.Application.Common.Results;
+using HomeServer.Application.Dtos.Auth;
 using HomeServer.Application.Interfaces.Auth;
-using HomeServer.Domain.Dtos.Auth;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
 using HomeServer.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace HomeServer.Application.Services.Auth
 {
@@ -68,7 +69,17 @@ namespace HomeServer.Application.Services.Auth
         public async Task<Result<RefreshSessionResponseDto>> Refresh(RefreshSessionDto refreshSessionDto)
         {
             // Get user from refresh token
-            var userId = _jwtService.GetUserIdFromRefreshToken(refreshSessionDto.RefreshToken);
+            Guid userId;
+            try
+            {
+                userId = _jwtService.GetUserIdFromRefreshToken(refreshSessionDto.RefreshToken);
+            } catch (SecurityTokenException)
+            {
+                return Result<RefreshSessionResponseDto>.Failure("Niepoprawna sesja!");
+            } catch (UnauthorizedAccessException)
+            {
+                return Result<RefreshSessionResponseDto>.Failure("Niepoprawna sesja!");
+            }
 
             // Get hash of current refresh token
             string oldHashedRefreshToken = HashRefreshToken(refreshSessionDto.RefreshToken);

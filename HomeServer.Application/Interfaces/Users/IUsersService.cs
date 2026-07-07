@@ -1,5 +1,5 @@
 ﻿using HomeServer.Application.Common.Results;
-using HomeServer.Domain.Dtos.Users;
+using HomeServer.Application.Dtos.Users;
 
 namespace HomeServer.Application.Interfaces.Users
 {

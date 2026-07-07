@@ -1,6 +1,6 @@
-﻿using HomeServer.Application.Interfaces.Auth;
+﻿using HomeServer.Application.Dtos.Auth;
+using HomeServer.Application.Interfaces.Auth;
 using HomeServer.Application.Interfaces.UserSession;
-using HomeServer.Domain.Dtos.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

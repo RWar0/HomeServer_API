@@ -35,7 +35,7 @@ namespace HomeServer.Application.Common.Results
         [MemberNotNullWhen(true, nameof(Value))]
         public bool IsOk()
         {
-            return IsSuccess && Value != null;
+            return IsSuccess && Value is not null;
         }
     }
 }

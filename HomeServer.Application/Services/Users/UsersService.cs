@@ -1,7 +1,7 @@
 ﻿using HomeServer.Application.Base;
 using HomeServer.Application.Common.Results;
+using HomeServer.Application.Dtos.Users;
 using HomeServer.Application.Interfaces.Users;
-using HomeServer.Domain.Dtos.Users;
 using HomeServer.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -11,6 +11,7 @@ namespace HomeServer.Application.Services.Users
     public class UsersService : BaseService, IUsersService
     {
         private readonly IMemoryCache _cache;
+        private const string USER_CACHE_KEY = "users";
 
         public UsersService(MyDbContext context, IMemoryCache cache) : base(context)
         {
@@ -19,7 +20,7 @@ namespace HomeServer.Application.Services.Users
 
         public async Task<Result<UserMyProfileDto>> GetUserMyProfile(Guid userId)
         {
-            string cacheKey = $"user:{userId}";
+            string cacheKey = $"{USER_CACHE_KEY}:{userId}";
 
             if (_cache.TryGetValue(cacheKey, out var cachedUserObj) &&
                     cachedUserObj != null &&
