@@ -1,13 +1,16 @@
 
 using HomeServer.API.Middleware.ExceptionHandling;
 using HomeServer.Application.Interfaces.Auth;
+using HomeServer.Application.Interfaces.StoredFiles;
 using HomeServer.Application.Interfaces.Users;
 using HomeServer.Application.Interfaces.UserSession;
 using HomeServer.Application.Services.Auth;
+using HomeServer.Application.Services.StoredFiles;
 using HomeServer.Application.Services.Users;
 using HomeServer.Application.Services.UserSession;
 using HomeServer.Infrastructure.Data;
 using HomeServer.Infrastructure.Security;
+using HomeServer.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -56,6 +59,9 @@ namespace HomeServer.API
             builder.Services.AddMemoryCache();
 
             #region Services Initialization
+
+            builder.Services.AddScoped<FileStorageService>();
+            builder.Services.AddScoped<IStoredFilesService, StoredFilesService>();
 
             builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
             builder.Services.AddScoped<IJwtService, JwtService>();

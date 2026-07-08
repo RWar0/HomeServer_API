@@ -18,9 +18,9 @@ The project is structured as a small clean-architecture style solution, with API
 
 ```text
 HomeServer.API             HTTP API, controllers, middleware, DI, Swagger
-HomeServer.Application     Services, use cases, result handling, Dtos
+HomeServer.Application     Services, Interfaces, Dtos, use cases, result handling
 HomeServer.Domain          Models, enums, shared domain types
-HomeServer.Infrastructure  EF Core DbContext, migrations, entity configuration, security helpers
+HomeServer.Infrastructure  EF Core DbContext, migrations, file storage, entity configuration, security helpers
 ```
 
 ## Features
@@ -46,8 +46,8 @@ JWT signing keys are intentionally not stored in `appsettings.json`. For local d
 
 ```powershell
 cd HomeServer.API
-dotnet user-secrets set "Jwt:Access:Key" "YOUR_LONG_ACCESS_TOKEN_SECRET"
-dotnet user-secrets set "Jwt:Refresh:Key" "YOUR_LONG_REFRESH_TOKEN_SECRET"
+dotnet user-secrets set "Jwt:Access:Key" "YOUR_ACCESS_TOKEN_SECRET"
+dotnet user-secrets set "Jwt:Refresh:Key" "YOUR_REFRESH_TOKEN_SECRET"
 ```
 
 You can generate a strong local secret in PowerShell:
@@ -61,8 +61,8 @@ Run the command twice and use different values for access and refresh tokens.
 For production-like environments, prefer environment variables:
 
 ```powershell
-$env:Jwt__Access__Key="YOUR_LONG_ACCESS_TOKEN_SECRET"
-$env:Jwt__Refresh__Key="YOUR_LONG_REFRESH_TOKEN_SECRET"
+$env:Jwt__Access__Key="YOUR_ACCESS_TOKEN_SECRET"
+$env:Jwt__Refresh__Key="YOUR_REFRESH_TOKEN_SECRET"
 ```
 
 ## Database setup

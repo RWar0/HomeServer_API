@@ -13,6 +13,7 @@ namespace HomeServer.Infrastructure.Data
         #region Sets of models
         public required DbSet<User> Users { get; set; }
         public required DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
+        public required DbSet<StoredFile> StoredFiles { get; set; }
         #endregion
 
 
