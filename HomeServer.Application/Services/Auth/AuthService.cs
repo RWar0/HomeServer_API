@@ -32,13 +32,13 @@ namespace HomeServer.Application.Services.Auth
 
             if (user is null)
             {
-                return Result.Failure("Niepoprawny login lub/i hasło!");
+                return Result.Failure("Niepoprawny login lub/i hasło!", ProblemType.Unauthorized);
             }
 
 
             if (!_passwordHasher.IsPasswordValid(loginUserDto.Password, user.Password))
             {
-                return Result.Failure("Niepoprawny login lub/i hasło!");
+                return Result.Failure("Niepoprawny login lub/i hasło!", ProblemType.Unauthorized);
             }
 
             // Generate access and refresh tokens
@@ -75,10 +75,10 @@ namespace HomeServer.Application.Services.Auth
                 userId = _jwtService.GetUserIdFromRefreshToken(refreshSessionDto.RefreshToken);
             } catch (SecurityTokenException)
             {
-                return Result.Failure("Niepoprawna sesja!");
+                return Result.Failure("Sesja wygasła!", ProblemType.Unauthorized);
             } catch (UnauthorizedAccessException)
             {
-                return Result.Failure("Niepoprawna sesja!");
+                return Result.Failure("Niepoprawna sesja!", ProblemType.Unauthorized);
             }
 
             // Get hash of current refresh token
@@ -97,7 +97,7 @@ namespace HomeServer.Application.Services.Auth
 
             if (session is null)
             {
-                return Result.Failure("Niepoprawna sesja!");
+                return Result.Failure("Niepoprawna sesja!", ProblemType.Unauthorized);
             }
 
             // Revoke session - invalidates old and insert new
@@ -139,7 +139,7 @@ namespace HomeServer.Application.Services.Auth
             catch
             {
                 await transaction.RollbackAsync();
-                throw new DbUpdateException("Nie można odświeżyć sesji!");
+                return Result.Failure("Nie można odświeżyć sesji!", ProblemType.InternalServerError);
             }
         }
 

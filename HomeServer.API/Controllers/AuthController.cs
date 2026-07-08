@@ -1,4 +1,5 @@
-﻿using HomeServer.Application.Dtos.Auth;
+﻿using HomeServer.API.Common.Extensions;
+using HomeServer.Application.Dtos.Auth;
 using HomeServer.Application.Interfaces.Auth;
 using HomeServer.Application.Interfaces.UserSession;
 using Microsoft.AspNetCore.Authorization;
@@ -24,12 +25,7 @@ namespace HomeServer.API.Controllers
         {
             var response = await _authService.Login(loginUserDto);
 
-            if (!response.IsSuccess || response.Value == null)
-            {
-                return Unauthorized(response.Error);
-            }
-
-            return response.Value;
+            return response.ToActionResult(this);
         }
 
         [HttpPost("refresh")]
@@ -37,12 +33,7 @@ namespace HomeServer.API.Controllers
         {
             var response = await _authService.Refresh(refreshSessionDto);
 
-            if (!response.IsSuccess || response.Value == null)
-            {
-                return Unauthorized(response.Error);
-            }
-
-            return response.Value;
+            return response.ToActionResult(this);
         }
 
         [HttpPost("logout")]
@@ -51,12 +42,7 @@ namespace HomeServer.API.Controllers
         {
             var response = await _authService.Logout(logoutDto, _currentUserService.UserId);
 
-            if (!response.IsSuccess || response.Value == null)
-            {
-                return Unauthorized(response.Error);
-            }
-
-            return response.Value;
+            return response.ToActionResult(this);
         }
     }
 }

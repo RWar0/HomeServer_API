@@ -30,7 +30,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
             catch
             {
-                return Result.Failure("Nie dodano akwarium do bazy danych!");
+                return Result.Failure("Nie dodano akwarium do bazy danych!", ProblemType.InternalServerError);
             }
         }
 
@@ -56,7 +56,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
             catch
             {
-                return Result.Failure("Można pobrać akwariów z bazy danych!");
+                return Result.Failure("Można pobrać akwariów z bazy danych!", ProblemType.InternalServerError);
             }
         }
     }

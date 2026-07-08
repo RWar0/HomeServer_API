@@ -44,7 +44,7 @@ namespace HomeServer.Application.Services.Users
 
             if (user == null)
             {
-                return Result.Failure("Brak użytkownika o podanym identyfikatorze!", 404, "NotFound");
+                return Result.Failure("Brak użytkownika o podanym identyfikatorze!", ProblemType.NotFound);
             }
 
             _cache.Set(cacheKey, user, new MemoryCacheEntryOptions

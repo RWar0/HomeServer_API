@@ -16,6 +16,15 @@ namespace HomeServer.Application.Common.Results
                 errorCode ?? 400,
                 errorTitle ?? "BadRequest"
             );
+
+        public static FailureResult Failure(
+            string error,
+            ProblemType problem)
+            => new(
+                error,
+                problem.GetStatusCode(),
+                problem.GetTitle()
+            );
     }
 
     public readonly record struct FailureResult(
