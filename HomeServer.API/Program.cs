@@ -1,9 +1,11 @@
 
 using HomeServer.API.Middleware.ExceptionHandling;
+using HomeServer.Application.Interfaces.Aquariums;
 using HomeServer.Application.Interfaces.Auth;
 using HomeServer.Application.Interfaces.StoredFiles;
 using HomeServer.Application.Interfaces.Users;
 using HomeServer.Application.Interfaces.UserSession;
+using HomeServer.Application.Services.Aquariums;
 using HomeServer.Application.Services.Auth;
 using HomeServer.Application.Services.StoredFiles;
 using HomeServer.Application.Services.Users;
@@ -68,6 +70,7 @@ namespace HomeServer.API
             builder.Services.AddScoped<IAuthService, AuthService>();
 
             builder.Services.AddScoped<IUsersService, UsersService>();
+            builder.Services.AddScoped<IAquariumsService, AquariumsService>();
 
 
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();

@@ -1,4 +1,5 @@
-﻿using HomeServer.Application.Dtos.Users;
+﻿using HomeServer.API.Common.Extensions;
+using HomeServer.Application.Dtos.Users;
 using HomeServer.Application.Interfaces.Users;
 using HomeServer.Application.Interfaces.UserSession;
 using Microsoft.AspNetCore.Authorization;
@@ -25,12 +26,7 @@ namespace HomeServer.API.Controllers
         {
             var result = await _usersService.GetUserMyProfile(_currentUserService.UserId);
 
-            if(!result.IsOk())
-            {
-                return NotFound(result.Error);
-            }
-
-            return result.Value;
+            return result.ToActionResult(this);
         }
     }
 }

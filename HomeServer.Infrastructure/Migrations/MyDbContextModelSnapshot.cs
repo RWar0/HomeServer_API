@@ -22,10 +22,43 @@ namespace HomeServer.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("HomeServer.Domain.Models.Aquarium", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("CreationDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Volume")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Aquariums");
+                });
+
             modelBuilder.Entity("HomeServer.Domain.Models.StoredFile", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AquariumId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ContentType")
@@ -60,6 +93,8 @@ namespace HomeServer.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AquariumId");
 
                     b.HasIndex("OriginalName");
 
@@ -155,6 +190,13 @@ namespace HomeServer.Infrastructure.Migrations
                     b.ToTable("UserRefreshTokens");
                 });
 
+            modelBuilder.Entity("HomeServer.Domain.Models.StoredFile", b =>
+                {
+                    b.HasOne("HomeServer.Domain.Models.Aquarium", null)
+                        .WithMany("Photos")
+                        .HasForeignKey("AquariumId");
+                });
+
             modelBuilder.Entity("HomeServer.Domain.Models.UserRefreshToken", b =>
                 {
                     b.HasOne("HomeServer.Domain.Models.User", "User")
@@ -164,6 +206,11 @@ namespace HomeServer.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("HomeServer.Domain.Models.Aquarium", b =>
+                {
+                    b.Navigation("Photos");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.User", b =>
