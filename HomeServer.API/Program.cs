@@ -1,4 +1,5 @@
 
+using HomeServer.API.Configuration.RateLimiting;
 using HomeServer.API.Middleware.ExceptionHandling;
 using HomeServer.Application.Interfaces.Aquariums;
 using HomeServer.Application.Interfaces.Auth;
@@ -26,8 +27,7 @@ namespace HomeServer.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var dbConnectionString = builder.Configuration.GetConnectionString("DatabaseConnection");
-
+            #region Authentication JWT implementation
             var jwtSettings = builder.Configuration.GetSection("Jwt");
             var key = Encoding.UTF8.GetBytes(jwtSettings["Access:Key"]!);
 
@@ -50,11 +50,19 @@ namespace HomeServer.API
                         };
                     });
 
+            #endregion
+
+            #region SQL Connection
+            var dbConnectionString = builder.Configuration.GetConnectionString("DatabaseConnection");
+
             builder.Services.AddDbContext<MyDbContext>(options =>
-                options.UseSqlServer(
-                    dbConnectionString,
-                    b => b.MigrationsAssembly("HomeServer.Infrastructure")
-                ));
+                    options.UseSqlServer(
+                        dbConnectionString,
+                        b => b.MigrationsAssembly("HomeServer.Infrastructure")
+                    ));
+            #endregion
+
+            builder.Services.AddApiRateLimiting(builder.Configuration);
 
             builder.Services.AddHttpContextAccessor();
 
@@ -96,6 +104,7 @@ namespace HomeServer.API
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
+            app.UseRateLimiter();
             app.UseAuthorization();
 
             app.UseExceptionHandler();
