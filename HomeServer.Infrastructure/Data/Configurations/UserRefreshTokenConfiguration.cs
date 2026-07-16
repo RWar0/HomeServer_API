@@ -11,6 +11,8 @@ namespace HomeServer.Infrastructure.Data.Configurations
             builder.HasIndex(x => x.RefreshToken);
             builder.HasIndex(x => x.ExpiresAt);
             builder.HasIndex(x => x.RevokedAt);
+
+            builder.Property(x => x.RowVersion).IsRowVersion();
         }
     }
 }

@@ -26,9 +26,9 @@ namespace HomeServer.API.Configuration.RateLimiting
                 await context.HttpContext.Response.WriteAsJsonAsync(new
                 {
                     type = "https://httpstatuses.com/429",
-                    title = "Too Many Requests",
+                    title = "Za dużo zapytań!",
                     status = 429,
-                    detail = "Rate limit exceeded. Try again later."
+                    detail = "Limit wysłanych zapytań został wyczerpany. Spróbuj ponownie za 5 minut!"
                 }, cancellationToken);
             };
 

@@ -11,6 +11,7 @@ using HomeServer.Application.Services.Auth;
 using HomeServer.Application.Services.StoredFiles;
 using HomeServer.Application.Services.Users;
 using HomeServer.Application.Services.UserSession;
+using HomeServer.Application.Configuration.Jwt;
 using HomeServer.Infrastructure.Data;
 using HomeServer.Infrastructure.Security;
 using HomeServer.Infrastructure.Storage;
@@ -62,13 +63,14 @@ namespace HomeServer.API
                     ));
             #endregion
 
-            builder.Services.AddApiRateLimiting(builder.Configuration);
+            //builder.Services.AddApiRateLimiting(builder.Configuration);
 
             builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddMemoryCache();
 
             #region Services Initialization
+            builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 
             builder.Services.AddScoped<FileStorageService>();
             builder.Services.AddScoped<IStoredFilesService, StoredFilesService>();
@@ -84,6 +86,18 @@ namespace HomeServer.API
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             #endregion
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AngularPolicy", policy =>
+                {
+                    policy
+                        .WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
 
             builder.Services.AddControllers();
 
@@ -101,10 +115,12 @@ namespace HomeServer.API
                 app.UseSwaggerUI();
             }
 
+            app.UseCors("AngularPolicy");
+
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
-            app.UseRateLimiter();
+            //app.UseRateLimiter();
             app.UseAuthorization();
 
             app.UseExceptionHandler();

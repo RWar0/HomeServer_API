@@ -1,6 +1,7 @@
-﻿using HomeServer.Application.Interfaces.Auth;
+﻿using HomeServer.Application.Configuration.Jwt;
+using HomeServer.Application.Interfaces.Auth;
 using HomeServer.Domain.Models;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -12,30 +13,16 @@ namespace HomeServer.Application.Services.Auth
     {
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
 
-        private readonly string _jwtIssuer;
-        private readonly string _jwtAudience;
+        private JwtOptions _jwtOptions;
 
-        private readonly string _accessTokenKey;
-        private readonly int _accessTokenDuration;
-
-        private readonly string _refreshTokenKey;
-        private readonly int _refreshTokenDuration;
-
-        public JwtService(IConfiguration config)
+        public JwtService(IOptions<JwtOptions> jwtOptions)
         {
-            _jwtIssuer = config["Jwt:Issuer"] ?? throw new InvalidOperationException("Cannot get jwt issuer!");
-            _jwtAudience = config["Jwt:Audience"] ?? throw new InvalidOperationException("Cannot get jwt audience!");
-
-            _accessTokenKey = config["Jwt:Access:Key"] ?? throw new InvalidOperationException("Cannot get access token key!");
-            _accessTokenDuration = GetRequiredInt(config, "Jwt:Access:DurationInMinutes");
-
-            _refreshTokenKey = config["Jwt:Refresh:Key"] ?? throw new InvalidOperationException("Cannot get refresh token key!");
-            _refreshTokenDuration = GetRequiredInt(config, "Jwt:Refresh:DurationInMinutes");
+            _jwtOptions = jwtOptions.Value;
         }
 
         public string GenerateAccessToken(User user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_accessTokenKey));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Access.Key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             Claim[] claims = [
@@ -45,10 +32,10 @@ namespace HomeServer.Application.Services.Auth
             ];
 
             var token = new JwtSecurityToken(
-                issuer: _jwtIssuer,
-                audience: _jwtAudience,
+                issuer: _jwtOptions.Issuer,
+                audience: _jwtOptions.Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_accessTokenDuration),
+                expires: DateTime.UtcNow.AddMinutes(_jwtOptions.Access.DurationInMinutes),
                 signingCredentials: credentials);
 
             return _tokenHandler.WriteToken(token);
@@ -56,7 +43,7 @@ namespace HomeServer.Application.Services.Auth
 
         public (string refreshToken, DateTime refreshTokenExpiration) GenerateRefreshToken(User user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_refreshTokenKey));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Refresh.Key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             Claim[] claims = [
@@ -65,11 +52,11 @@ namespace HomeServer.Application.Services.Auth
                 new(ClaimTypes.Name, user.Username),
             ];
 
-            var expiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenDuration);
+            var expiresAt = DateTime.UtcNow.AddMinutes(_jwtOptions.Access.DurationInMinutes);
 
             var token = new JwtSecurityToken(
-                issuer: _jwtIssuer,
-                audience: _jwtAudience,
+                issuer: _jwtOptions.Issuer,
+                audience: _jwtOptions.Audience,
                 claims: claims,
                 expires: expiresAt,
                 signingCredentials: credentials);
@@ -79,7 +66,7 @@ namespace HomeServer.Application.Services.Auth
 
         public Guid GetUserIdFromRefreshToken(string refreshToken)
         {
-            var principal = GetPrincipalFromToken(refreshToken, _refreshTokenKey);
+            var principal = GetPrincipalFromToken(refreshToken, _jwtOptions.Refresh.Key);
 
             var userIdString = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
                 ?? throw new UnauthorizedAccessException("User from session is invalid!"); ;
@@ -92,16 +79,6 @@ namespace HomeServer.Application.Services.Auth
             return userId;
         }
 
-        private static int GetRequiredInt(IConfiguration config, string path)
-        {
-            if (!int.TryParse(config[path], out var value))
-            {
-                throw new InvalidOperationException($"Invalid value in configuration file: {path}");
-            }
-
-            return value;
-        }
-
         private ClaimsPrincipal GetPrincipalFromToken(string token, string signingKey)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -111,10 +88,10 @@ namespace HomeServer.Application.Services.Auth
             var parameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
-                ValidIssuer = _jwtIssuer,
+                ValidIssuer = _jwtOptions.Issuer,
 
                 ValidateAudience = true,
-                ValidAudience = _jwtAudience,
+                ValidAudience = _jwtOptions.Audience,
 
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),

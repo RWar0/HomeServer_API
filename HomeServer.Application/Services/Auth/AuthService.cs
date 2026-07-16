@@ -22,7 +22,7 @@ namespace HomeServer.Application.Services.Auth
             _jwtService = jwtService;
         }
 
-        public async Task<Result<LoginResponseDto>> Login(LoginUserDto loginUserDto)
+        public async Task<Result<LoginResponseWithRefreshDto>> Login(LoginUserDto loginUserDto)
         {
 
             // Get and Validate user
@@ -58,7 +58,7 @@ namespace HomeServer.Application.Services.Auth
             await _context.SaveChangesAsync();
 
             // Return results
-            return Result<LoginResponseDto>.Success(new LoginResponseDto()
+            return Result<LoginResponseWithRefreshDto>.Success(new LoginResponseWithRefreshDto()
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
@@ -66,26 +66,28 @@ namespace HomeServer.Application.Services.Auth
             });
         }
 
-        public async Task<Result<RefreshSessionResponseDto>> Refresh(RefreshSessionDto refreshSessionDto)
+        public async Task<Result<RefreshSessionResponseDto>> Refresh(string oldRefreshToken)
         {
             // Get user from refresh token
             Guid userId;
             try
             {
-                userId = _jwtService.GetUserIdFromRefreshToken(refreshSessionDto.RefreshToken);
-            } catch (SecurityTokenException)
+                userId = _jwtService.GetUserIdFromRefreshToken(oldRefreshToken);
+            }
+            catch (SecurityTokenException)
             {
                 return Result.Failure("Sesja wygasła!", ProblemType.Unauthorized);
-            } catch (UnauthorizedAccessException)
+            }
+            catch (UnauthorizedAccessException)
             {
                 return Result.Failure("Niepoprawna sesja!", ProblemType.Unauthorized);
             }
 
             // Get hash of current refresh token
-            string oldHashedRefreshToken = HashRefreshToken(refreshSessionDto.RefreshToken);
+            string oldHashedRefreshToken = HashRefreshToken(oldRefreshToken);
 
             // Check for session
-            UserRefreshToken? session = await _context.UserRefreshTokens
+            UserRefreshToken? currentSession = await _context.UserRefreshTokens
                     .Include(item => item.User)
                     .Where(item =>
                         item.DeletedAt == null &&
@@ -95,39 +97,40 @@ namespace HomeServer.Application.Services.Auth
                         item.ExpiresAt > DateTime.UtcNow)
                     .FirstOrDefaultAsync();
 
-            if (session is null)
+            if (currentSession is null)
             {
                 return Result.Failure("Niepoprawna sesja!", ProblemType.Unauthorized);
             }
 
-            // Revoke session - invalidates old and insert new
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            if (currentSession.PreviousRefreshToken != null && currentSession.PreviousRefreshToken.Equals(oldHashedRefreshToken))
+            {
+                // TODO: Adds to logs possible vulnerability
 
+                // Revoke all active user sessions
+                await RevokeAllUserSessions(userId);
+
+                return Result.Failure("Twoje konto zostało prawdopodobnie przez kogoś skradzione! Sesja tego urządzenia została już zaktualizowana! Wylogowano z wszystkich urządzeń, w celach bezpieczeństwa.", ProblemType.Unauthorized);
+            }
+
+            // Rotate refresh token
             try
             {
                 // Generate access token
-                string accessToken = _jwtService.GenerateAccessToken(session.User);
+                string accessToken = _jwtService.GenerateAccessToken(currentSession.User);
 
                 // Generate new refresh token
-                var (refreshToken, refreshTokenExpiration) = _jwtService.GenerateRefreshToken(session.User);
+                var (refreshToken, refreshTokenExpiration) = _jwtService.GenerateRefreshToken(currentSession.User);
 
                 string newHashedRefreshToken = HashRefreshToken(refreshToken);
 
-                // Invalidates old session
-                session.RevokedAt = DateTime.UtcNow;
-
                 // Save new refresh token to db
-                _context.UserRefreshTokens.Add(new UserRefreshToken()
-                {
-                    RefreshToken = newHashedRefreshToken,
-                    User = session.User,
-                    ExpiresAt = refreshTokenExpiration
-                });
+                currentSession.PreviousRefreshToken = oldHashedRefreshToken;
+                currentSession.RefreshToken = newHashedRefreshToken;
+                currentSession.ExpiresAt = refreshTokenExpiration;
+                currentSession.RefreshDate = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 
-                await transaction.CommitAsync();
-                ;
                 return Result<RefreshSessionResponseDto>.Success(
                     new RefreshSessionResponseDto()
                     {
@@ -136,16 +139,19 @@ namespace HomeServer.Application.Services.Auth
                     }
                 );
             }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Failure("Ktoś odświeżył sesję w tym samym momencie!", ProblemType.Unauthorized);
+            }
             catch
             {
-                await transaction.RollbackAsync();
                 return Result.Failure("Nie można odświeżyć sesji!", ProblemType.InternalServerError);
             }
         }
 
-        public async Task<Result<string>> Logout(LogoutDto logoutDto, Guid userId)
+        public async Task<Result<string>> Logout(string refreshToken, Guid userId)
         {
-            var hashedRefreshToken = HashRefreshToken(logoutDto.RefreshToken);
+            var hashedRefreshToken = HashRefreshToken(refreshToken);
 
             UserRefreshToken? session = await _context.UserRefreshTokens
                 .Include(item => item.User)
@@ -167,6 +173,29 @@ namespace HomeServer.Application.Services.Auth
             await _context.SaveChangesAsync();
 
             return Result<string>.Success("Wylogowano poprawnie!");
+        }
+
+        private async Task RevokeAllUserSessions(Guid userId)
+        {
+            UserRefreshToken[] allUserSessions = await _context.UserRefreshTokens
+                .Where(item =>
+                    item.DeletedAt == null &&
+                    item.RevokedAt == null &&
+                    item.User.Id == userId &&
+                    item.ExpiresAt > DateTime.UtcNow)
+                .ToArrayAsync();
+
+            if (allUserSessions.Length == 0)
+            {
+                return;
+            }
+
+            foreach (var session in allUserSessions)
+            {
+                session.RevokedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         // Helper methods
