@@ -2,6 +2,7 @@
 using HomeServer.Application.Common.Pagination;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Aquariums;
+using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Interfaces.Aquariums;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
@@ -13,7 +14,7 @@ namespace HomeServer.Application.Services.Aquariums
     {
         public AquariumsService(MyDbContext context) : base(context) { }
 
-        public async Task<Result<string>> Create(AquariumCreateDto createDto)
+        public async Task<Result<MessageResponseDto>> Create(AquariumCreateDto createDto)
         {
             try
             {
@@ -26,7 +27,10 @@ namespace HomeServer.Application.Services.Aquariums
 
                 await _context.SaveChangesAsync();
 
-                return Result.Success($"Akwarium ${createDto.Name} zostało utworzone!");
+                return Result.Success(new MessageResponseDto()
+                {
+                    Message = $"Akwarium \"{createDto.Name}\" zostało utworzone!"
+                });
             }
             catch
             {
@@ -34,7 +38,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<AquariumGetResponseDto[]>> GetAll(BasePaginationDto paginationDto)
+        public async Task<Result<AquariumGetResponseDto[]>> GetAll()
         {
             try
             {
@@ -43,6 +47,7 @@ namespace HomeServer.Application.Services.Aquariums
                     .Where(item => item.DeletedAt == null)
                     .Select(item => new AquariumGetResponseDto()
                     {
+                        Id = item.Id,
                         Name = item.Name,
                         Volume = item.Volume,
                         CreationDate = item.CreationDate,
