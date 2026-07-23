@@ -2,6 +2,7 @@
 using HomeServer.Application.Base;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Auth;
+using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Interfaces.Auth;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
@@ -149,7 +150,7 @@ namespace HomeServer.Application.Services.Auth
             }
         }
 
-        public async Task<Result<string>> Logout(string refreshToken, Guid userId)
+        public async Task<Result<MessageResponseDto>> Logout(string refreshToken, Guid userId)
         {
             var hashedRefreshToken = HashRefreshToken(refreshToken);
 
@@ -165,14 +166,17 @@ namespace HomeServer.Application.Services.Auth
 
             if (session is null)
             {
-                return Result.Failure("Niepoprawna sesja!");
+                return Result.Failure("Nie wylogowano poprawnie! - Niepoprawna sesja!");
             }
 
             session.RevokedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
-            return Result<string>.Success("Wylogowano poprawnie!");
+            return Result.Success(new MessageResponseDto()
+            {
+                Message = "Wylogowano poprawnie!"
+            });
         }
 
         private async Task RevokeAllUserSessions(Guid userId)

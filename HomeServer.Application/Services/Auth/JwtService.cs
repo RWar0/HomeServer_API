@@ -52,7 +52,7 @@ namespace HomeServer.Application.Services.Auth
                 new(ClaimTypes.Name, user.Username),
             ];
 
-            var expiresAt = DateTime.UtcNow.AddMinutes(_jwtOptions.Access.DurationInMinutes);
+            var expiresAt = DateTime.UtcNow.AddMinutes(_jwtOptions.Refresh.DurationInMinutes);
 
             var token = new JwtSecurityToken(
                 issuer: _jwtOptions.Issuer,
@@ -97,6 +97,8 @@ namespace HomeServer.Application.Services.Auth
                 IssuerSigningKey = new SymmetricSecurityKey(key),
 
                 ValidateLifetime = true,
+
+                ClockSkew = TimeSpan.Zero
             };
 
             var claims = tokenHandler.ValidateToken(token, parameters, out _);

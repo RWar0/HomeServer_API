@@ -2,6 +2,7 @@
 using HomeServer.Application.Dtos.Aquariums;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Interfaces.Aquariums;
+using HomeServer.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,6 +21,7 @@ namespace HomeServer.API.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize(Roles = nameof(RolesEnum.Admin))]
         public async Task<ActionResult<MessageResponseDto>> CreateAquarium(AquariumCreateDto createDto)
         {
             var result = await _aquariumsService.Create(createDto);

@@ -19,6 +19,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HomeServer.API
 {
@@ -45,9 +48,29 @@ namespace HomeServer.API
                             ValidateAudience = true,
                             ValidateLifetime = true,
                             ValidateIssuerSigningKey = true,
+
                             ValidIssuer = jwtSettings["Issuer"],
                             ValidAudience = jwtSettings["Audience"],
-                            IssuerSigningKey = new SymmetricSecurityKey(key)
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+
+                            NameClaimType = JwtRegisteredClaimNames.Name,
+                            RoleClaimType = ClaimTypes.Role
+                        };
+                        options.Events = new JwtBearerEvents
+                        {
+                            OnForbidden = async context =>
+                            {
+                                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                                context.Response.ContentType = "application/problem+json";
+
+                                await context.Response.WriteAsJsonAsync(new ProblemDetails
+                                {
+                                    Status = StatusCodes.Status403Forbidden,
+                                    Title = "Forbidden",
+                                    Detail = "Nie masz wystarczaj¹cych uprawnieñ, ¿eby wykonaæ t¹ czynnoœæ!",
+                                    Type = "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+                                });
+                            }
                         };
                     });
 
@@ -63,7 +86,7 @@ namespace HomeServer.API
                     ));
             #endregion
 
-            //builder.Services.AddApiRateLimiting(builder.Configuration);
+            builder.Services.AddApiRateLimiting(builder.Configuration);
 
             builder.Services.AddHttpContextAccessor();
 
@@ -91,8 +114,9 @@ namespace HomeServer.API
             {
                 options.AddPolicy("AngularPolicy", policy =>
                 {
+                    // Localhost policy
                     policy
-                        .WithOrigins("http://localhost:4200")
+                        .WithOrigins("http://192.168.0.111:4200", "http://localhost:4200")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
@@ -120,7 +144,7 @@ namespace HomeServer.API
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
-            //app.UseRateLimiter();
+            app.UseRateLimiter();
             app.UseAuthorization();
 
             app.UseExceptionHandler();

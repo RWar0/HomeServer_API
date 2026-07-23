@@ -3,6 +3,7 @@ using HomeServer.API.Common.Extensions;
 using HomeServer.API.Configuration.RateLimiting;
 using HomeServer.Application.Configuration.Jwt;
 using HomeServer.Application.Dtos.Auth;
+using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Interfaces.Auth;
 using HomeServer.Application.Interfaces.UserSession;
 using Microsoft.AspNetCore.Authorization;
@@ -19,13 +20,15 @@ namespace HomeServer.API.Controllers
         private readonly IAuthService _authService;
         private readonly ICurrentUserService _currentUserService;
         private readonly JwtOptions _jwtOptions;
+        private readonly IWebHostEnvironment _env;
 
-        public AuthController(IAuthService authService, ICurrentUserService currentUserService, IOptions<JwtOptions> jwtOptions)
+        public AuthController(IAuthService authService, ICurrentUserService currentUserService, IOptions<JwtOptions> jwtOptions, IWebHostEnvironment env)
         {
             _authService = authService;
             _currentUserService = currentUserService;
 
             _jwtOptions = jwtOptions.Value;
+            _env = env;
         }
 
         [EnableRateLimiting(RateLimitingConstants.Login)]
@@ -81,7 +84,7 @@ namespace HomeServer.API.Controllers
         [EnableRateLimiting(RateLimitingConstants.Refresh)]
         [HttpPost("logout")]
         [Authorize]
-        public async Task<ActionResult<string>> Logout()
+        public async Task<ActionResult<MessageResponseDto>> Logout()
         {
             if (!Request.Cookies.TryGetValue(CookieConstants.RefreshTokenCookieKey, out string? refreshToken))
             {
@@ -90,7 +93,7 @@ namespace HomeServer.API.Controllers
 
             var response = await _authService.Logout(refreshToken, _currentUserService.UserId);
 
-            // Invalidates refresh token session!
+            // Invalidates user's refresh token - invalidates session!
             if (response.IsSuccess)
             {
                 Response.Cookies.Delete(CookieConstants.RefreshTokenCookieKey, CreateRefreshTokenCookieOptions(forDelete: true));
@@ -106,7 +109,7 @@ namespace HomeServer.API.Controllers
             return new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                Secure = false,
                 SameSite = SameSiteMode.Lax,
                 Expires = forDelete ? null : DateTimeOffset.UtcNow.AddMinutes(_jwtOptions.Refresh.DurationInMinutes),
                 MaxAge = forDelete ? null : TimeSpan.FromMinutes(_jwtOptions.Refresh.DurationInMinutes),
