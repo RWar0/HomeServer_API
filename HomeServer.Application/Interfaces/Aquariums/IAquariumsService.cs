@@ -9,5 +9,7 @@ namespace HomeServer.Application.Interfaces.Aquariums
     {
         public Task<Result<MessageResponseDto>> Create(AquariumCreateDto createDto);
         public Task<Result<AquariumGetResponseDto[]>> GetAll();
+        public Task<Result<AquariumBaseDataDto>> GetForEdit(Guid aquariumId);
+        public Task<Result<MessageResponseDto>> Update(Guid aquariumId, AquariumCreateDto editDto);
     }
 }

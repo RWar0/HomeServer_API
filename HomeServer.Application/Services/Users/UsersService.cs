@@ -5,6 +5,7 @@ using HomeServer.Application.Interfaces.Users;
 using HomeServer.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.Users
 {
@@ -13,7 +14,7 @@ namespace HomeServer.Application.Services.Users
         private readonly IMemoryCache _cache;
         private const string USER_CACHE_KEY = "users";
 
-        public UsersService(MyDbContext context, IMemoryCache cache) : base(context)
+        public UsersService(MyDbContext context, ILogger<UsersService> logger, IMemoryCache cache) : base(context, logger)
         {
             _cache = cache;
         }
@@ -30,30 +31,39 @@ namespace HomeServer.Application.Services.Users
                 return Result<UserMyProfileDto>.Success(cachedUser);
             }
 
-            var user = await _context.Users
-                .Where(item => item.Id == userId &&
-                    item.DeletedAt == null
-                )
-                .Select(item => new UserMyProfileDto()
+            try
+            {
+
+                var user = await _context.Users
+                    .Where(item => item.Id == userId &&
+                        item.DeletedAt == null
+                    )
+                    .Select(item => new UserMyProfileDto()
+                    {
+                        Email = item.Email,
+                        Name = item.Name,
+                        Role = item.Role.ToString(),
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (user == null)
                 {
-                    Email = item.Email,
-                    Name = item.Name,
-                    Role = item.Role.ToString(),
-                })
-                .FirstOrDefaultAsync();
+                    return Result.Failure("Brak użytkownika o podanym identyfikatorze!", ProblemType.NotFound);
+                }
 
-            if (user == null)
-            {
-                return Result.Failure("Brak użytkownika o podanym identyfikatorze!", ProblemType.NotFound);
+                _cache.Set(cacheKey, user, new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15),
+                    SlidingExpiration = TimeSpan.FromMinutes(2)
+                });
+
+                return Result<UserMyProfileDto>.Success(user);
             }
-
-            _cache.Set(cacheKey, user, new MemoryCacheEntryOptions
+            catch (Exception ex)
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15),
-                SlidingExpiration = TimeSpan.FromMinutes(2)
-            });
-
-            return Result<UserMyProfileDto>.Success(user);
+                _logger.LogError(ex, "Cannot get my-profile for user with Id: {userId}", userId);
+                return Result.Failure("Nie można pobrać profilu użytkownika!", ProblemType.InternalServerError);
+            }
         }
     }
 }

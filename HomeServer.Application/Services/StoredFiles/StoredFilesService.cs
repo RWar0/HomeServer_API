@@ -4,12 +4,13 @@ using HomeServer.Application.Interfaces.StoredFiles;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
 using HomeServer.Infrastructure.Storage;
+using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.StoredFiles
 {
     public class StoredFilesService : BaseService, IStoredFilesService
     {
-        public StoredFilesService(MyDbContext context) : base(context) { }
+        public StoredFilesService(MyDbContext context, ILogger<StoredFilesService> logger) : base(context, logger) { }
 
         public async Task<Result<StoredFile>> Create(FileStorageResult fileStorageResult, Guid? userId)
         {

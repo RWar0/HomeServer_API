@@ -8,6 +8,7 @@ using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
 using HomeServer.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 namespace HomeServer.Application.Services.Auth
@@ -17,7 +18,7 @@ namespace HomeServer.Application.Services.Auth
         private readonly IPasswordHasher _passwordHasher;
         private readonly IJwtService _jwtService;
 
-        public AuthService(MyDbContext context, IPasswordHasher passwordHasher, IJwtService jwtService) : base(context)
+        public AuthService(MyDbContext context, ILogger<AuthService> logger, IPasswordHasher passwordHasher, IJwtService jwtService) : base(context, logger)
         {
             _passwordHasher = passwordHasher;
             _jwtService = jwtService;
@@ -144,8 +145,9 @@ namespace HomeServer.Application.Services.Auth
             {
                 return Result.Failure("Ktoś odświeżył sesję w tym samym momencie!", ProblemType.Unauthorized);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Cannot refresh session for user with Id: {userId}", userId);
                 return Result.Failure("Nie można odświeżyć sesji!", ProblemType.InternalServerError);
             }
         }
