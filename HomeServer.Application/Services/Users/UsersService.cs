@@ -61,7 +61,7 @@ namespace HomeServer.Application.Services.Users
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Cannot get my-profile for user with Id: {userId}", userId);
+                _logger.LogError(ex, "Cannot get my-profile for user with Id: {UserId}", userId);
                 return Result.Failure("Nie można pobrać profilu użytkownika!", ProblemType.InternalServerError);
             }
         }

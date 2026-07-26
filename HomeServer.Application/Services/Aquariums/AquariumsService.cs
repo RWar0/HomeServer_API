@@ -27,7 +27,7 @@ namespace HomeServer.Application.Services.Aquariums
 
                 await _context.SaveChangesAsync();
 
-                return Result.Success(new MessageResponseDto()
+                return Result.Success(new MessageResponseDto
                 {
                     Message = $"Akwarium \"{createDto.Name}\" zostało utworzone!"
                 });
@@ -44,7 +44,6 @@ namespace HomeServer.Application.Services.Aquariums
             try
             {
                 var items = await _context.Aquariums
-                    .Include(item => item.Photos)
                     .Where(item => item.DeletedAt == null)
                     .Select(item => new AquariumGetResponseDto()
                     {
@@ -53,8 +52,9 @@ namespace HomeServer.Application.Services.Aquariums
                         Volume = item.Volume,
                         CreationDate = item.CreationDate,
                         LastPhotoId = item.Photos
-                                            .OrderByDescending(item => item.CreatedAt)
-                                            .First().Id
+                                            .OrderByDescending(photo => photo.CreatedAt)
+                                            .Select(photo => photo.Id)
+                                            .FirstOrDefault()
                     })
                     .ToListAsync();
 
@@ -93,7 +93,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Cannot get aquarium with Id: {aquariumId}", aquariumId);
+                _logger.LogError(ex, "Cannot get aquarium with Id: {AquariumId}", aquariumId);
                 return Result.Failure("Można pobrać akwarium z bazy danych!", ProblemType.InternalServerError);
             }
         }
@@ -102,11 +102,7 @@ namespace HomeServer.Application.Services.Aquariums
         {
             try
             {
-                var aquarium = await _context.Aquariums
-                    .Where(item =>
-                        item.Id == aquariumId &&
-                        item.DeletedAt == null)
-                    .FirstOrDefaultAsync();
+                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == aquariumId && item.DeletedAt == null);
 
                 if (aquarium is null)
                 {
@@ -121,15 +117,42 @@ namespace HomeServer.Application.Services.Aquariums
 
                 await _context.SaveChangesAsync();
 
-                return Result.Success(new MessageResponseDto()
+                return Result.Success(new MessageResponseDto
                 {
                     Message = $"Akwarium \"{aquarium.Name}\" edytowano pomyślnie!"
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Cannot update aquarium with Id: {aquariumId}", aquariumId);
+                _logger.LogError(ex, "Cannot update aquarium with Id: {AquariumId}", aquariumId);
                 return Result.Failure("Można zaktualizować akwarium!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<MessageResponseDto>> Delete(Guid aquariumId)
+        {
+            try
+            {
+                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == aquariumId && item.DeletedAt == null);
+
+                if (aquarium == null)
+                {
+                    return Result.Failure("Akwarium z podanym identyfikatorem nie istnieje!", ProblemType.NotFound);
+                }
+
+                aquarium.DeletedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                return Result.Success(new MessageResponseDto
+                {
+                    Message = $"Akwarium \"{aquarium.Name}\" zostało pomyślnie usunięte!"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot delete aquarium with Id: {AquariumId}", aquariumId);
+                return Result.Failure("Nie można usunąć akwarium!", ProblemType.InternalServerError);
             }
         }
     }

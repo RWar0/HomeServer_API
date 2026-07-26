@@ -53,5 +53,13 @@ namespace HomeServer.API.Controllers
             return result.ToActionResult(this);
         }
 
+        [HttpDelete("{aquariumId}")]
+        [Authorize(Roles = nameof(RolesEnum.Admin))]
+        public async Task<ActionResult<MessageResponseDto>> Delete([FromRoute] Guid aquariumId)
+        {
+            var result = await _aquariumsService.Delete(aquariumId);
+
+            return result.ToActionResult(this);
+        }
     }
 }
