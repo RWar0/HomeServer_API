@@ -5,7 +5,7 @@
 
         public FileStorageService() { }
 
-        public async Task<FileStorageResult> SaveAsync(Stream stream, string fileName, string contentType, string? subDirectory)
+        public async Task<FileStorageResult> SaveAsync(Stream stream, string fileName, string contentType, string? subDirectory = null)
         {
             var rootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Storage");
             var safeRootPath = Path.GetFullPath(rootPath)

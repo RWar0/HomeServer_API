@@ -2,6 +2,7 @@
 using HomeServer.Application.Dtos.Aquariums;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Interfaces.Aquariums;
+using HomeServer.Application.Interfaces.UserSession;
 using HomeServer.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +15,12 @@ namespace HomeServer.API.Controllers
     public class AquariumsController : ControllerBase
     {
         private readonly IAquariumsService _aquariumsService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public AquariumsController(IAquariumsService aquariumsService)
+        public AquariumsController(IAquariumsService aquariumsService, ICurrentUserService currentUserService)
         {
             _aquariumsService = aquariumsService;
+            _currentUserService = currentUserService;
         }
 
         [HttpPost("create")]
@@ -41,6 +44,14 @@ namespace HomeServer.API.Controllers
         public async Task<ActionResult<AquariumGetResponseDto[]>> GetAquariumForEdit([FromRoute] Guid aquariumId)
         {
             var result = await _aquariumsService.GetForEdit(aquariumId);
+
+            return result.ToActionResult(this);
+        }
+
+        [HttpPost("{aquariumId}/upload-photo")]
+        public async Task<ActionResult<MessageResponseDto>> UploadPhoto([FromRoute] Guid aquariumId, [FromForm] ImageDto fileDto)
+        {
+            var result = await _aquariumsService.UploadPhoto(aquariumId, fileDto, _currentUserService.UserId);
 
             return result.ToActionResult(this);
         }

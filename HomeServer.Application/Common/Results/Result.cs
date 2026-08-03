@@ -94,6 +94,20 @@ namespace HomeServer.Application.Common.Results
             string errorTitle = "BadRequest")
             => new(error, errorCode, errorTitle);
 
+        public Result<TNew> ToFailure<TNew>() where TNew : class
+        {
+            if (IsSuccess)
+            {
+                throw new InvalidOperationException("Cannot convert successful result to failure.");
+            }
+
+            return Result<TNew>.Failure(
+                Error,
+                ErrorCode,
+                ErrorTitle
+            );
+        }
+
         public static implicit operator Result<T>(FailureResult failure)
             => new(
                 failure.Error,

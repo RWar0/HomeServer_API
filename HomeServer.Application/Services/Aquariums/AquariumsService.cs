@@ -5,6 +5,7 @@ using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Interfaces.Aquariums;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
+using HomeServer.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -12,7 +13,12 @@ namespace HomeServer.Application.Services.Aquariums
 {
     public class AquariumsService : BaseService, IAquariumsService
     {
-        public AquariumsService(MyDbContext context, ILogger<AquariumsService> logger) : base(context, logger) { }
+        private readonly FileStorageService _fileStorageService;
+
+        public AquariumsService(MyDbContext context, ILogger<AquariumsService> logger, FileStorageService fileStorageService) : base(context, logger)
+        {
+            _fileStorageService = fileStorageService;
+        }
 
         public async Task<Result<MessageResponseDto>> Create(AquariumCreateDto createDto)
         {
@@ -53,7 +59,7 @@ namespace HomeServer.Application.Services.Aquariums
                         CreationDate = item.CreationDate,
                         LastPhotoId = item.Photos
                                             .OrderByDescending(photo => photo.CreatedAt)
-                                            .Select(photo => photo.Id)
+                                            .Select(photo => (Guid?)photo.Id)
                                             .FirstOrDefault()
                     })
                     .ToListAsync();
@@ -98,7 +104,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<MessageResponseDto>> Update(Guid aquariumId, AquariumCreateDto editDto)
+        private async Task<Result<Aquarium>> GetAquariumWithAllData(Guid aquariumId)
         {
             try
             {
@@ -106,8 +112,98 @@ namespace HomeServer.Application.Services.Aquariums
 
                 if (aquarium is null)
                 {
-                    return Result.Failure("Nie znaleziono akwarium o podanym identyfikatorze!!", ProblemType.NotFound);
+                    return Result.Failure("Nie znaleziono akwarium o podanym identyfikatorze!", ProblemType.NotFound);
                 }
+
+                return Result.Success(aquarium);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get all data for aquarium with Id: {AquariumId}", aquariumId);
+                return Result.Failure("Można pobrać akwarium!", ProblemType.InternalServerError);
+            }
+        }
+
+        private async Task<Result<Aquarium>> GetAquariumWithAllDataAndPhotos(Guid aquariumId)
+        {
+            try
+            {
+                var aquarium = await _context.Aquariums.Include(item => item.Photos).Where(item => item.Id == aquariumId && item.DeletedAt == null).FirstOrDefaultAsync();
+
+                if (aquarium is null)
+                {
+                    return Result.Failure("Nie znaleziono akwarium o podanym identyfikatorze!", ProblemType.NotFound);
+                }
+
+                return Result.Success(aquarium);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get all data for aquarium with Id: {AquariumId}", aquariumId);
+                return Result.Failure("Można pobrać akwarium!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<MessageResponseDto>> UploadPhoto(Guid aquariumId, ImageDto fileDto, Guid userId)
+        {
+            // Pobierz akwarium wraz ze zdjęciami
+            var aquariumResult = await GetAquariumWithAllDataAndPhotos(aquariumId);
+
+            if (aquariumResult.IsFailure)
+            {
+                return aquariumResult.ToFailure<MessageResponseDto>();
+            }
+
+            var aquarium = aquariumResult.Value;
+
+            // Utwórz plik obrazu na dysku
+            var uploadResult = await _fileStorageService.SaveAsync(
+                fileDto.File.OpenReadStream(),
+                fileDto.File.FileName,
+                fileDto.File.ContentType,
+                Path.Join("aquariums", aquarium.Id.ToString())
+            );
+
+            // Dodaj meta-dane pliku do bazy danych
+            try
+            {
+                StoredFile storedFile = new()
+                {
+                    OriginalName = uploadResult.OriginalName,
+                    StoredName = uploadResult.StoredName,
+                    RelativePath = uploadResult.RelativePath,
+                    ContentType = uploadResult.ContentType,
+                    Size = uploadResult.Size,
+                    CreatedByUserId = userId,
+                };
+
+                // Dodaj plik do akwarium i do DbSet
+                aquarium.Photos.Add(storedFile);
+                _context.StoredFiles.Add(storedFile);
+
+                await _context.SaveChangesAsync();
+
+                return Result.Success(new MessageResponseDto { Message = "Zdjęcie zostało pomyślnie przesłane" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot upload photo for aquarium with Id: {AquariumId}", aquariumId);
+                return Result.Failure("Nie można przesłać zdjęcia!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<MessageResponseDto>> Update(Guid aquariumId, AquariumCreateDto editDto)
+        {
+            try
+            {
+                var aquariumResult = await GetAquariumWithAllData(aquariumId);
+
+                if (aquariumResult.IsFailure)
+                {
+                    return aquariumResult.ToFailure<MessageResponseDto>();
+                }
+
+                var aquarium = aquariumResult.Value;
 
                 aquarium.Name = editDto.Name;
                 aquarium.Volume = editDto.Volume;
@@ -133,12 +229,14 @@ namespace HomeServer.Application.Services.Aquariums
         {
             try
             {
-                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == aquariumId && item.DeletedAt == null);
+                var aquariumResult = await GetAquariumWithAllData(aquariumId);
 
-                if (aquarium == null)
+                if (aquariumResult.IsFailure)
                 {
-                    return Result.Failure("Akwarium z podanym identyfikatorem nie istnieje!", ProblemType.NotFound);
+                    return aquariumResult.ToFailure<MessageResponseDto>();
                 }
+
+                var aquarium = aquariumResult.Value;
 
                 aquarium.DeletedAt = DateTime.UtcNow;
 
