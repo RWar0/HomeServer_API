@@ -28,6 +28,7 @@ HomeServer.Infrastructure  EF Core DbContext, migrations, file storage, entity c
 - Aquariums:
 	- Create,
 	- Get all,
+	- Get Photo of aquarium,
 	- Photo Upload,
 	- Update,
 	- Delete

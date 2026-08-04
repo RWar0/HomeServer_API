@@ -22,6 +22,8 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using HomeServer.Application.Interfaces.MyFiles;
+using HomeServer.Application.Services.MyFiles;
 
 namespace HomeServer.API
 {
@@ -104,6 +106,7 @@ namespace HomeServer.API
 
             builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<IAquariumsService, AquariumsService>();
+            builder.Services.AddScoped<IFileService, FileService>();
 
 
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
