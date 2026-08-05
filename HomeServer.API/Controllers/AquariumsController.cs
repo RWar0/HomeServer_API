@@ -39,6 +39,14 @@ namespace HomeServer.API.Controllers
 
             return result.ToActionResult(this);
         }
+        
+        [HttpGet("{aquariumId}/details")]
+        public async Task<ActionResult<AquariumGetResponseDto[]>> GetAquariumDetails([FromRoute] Guid aquariumId)
+        {
+            var result = await _aquariumsService.GetDetails(aquariumId);
+
+            return result.ToActionResult(this);
+        }
 
         [HttpGet("for-edit/{aquariumId}")]
         public async Task<ActionResult<AquariumGetResponseDto[]>> GetAquariumForEdit([FromRoute] Guid aquariumId)

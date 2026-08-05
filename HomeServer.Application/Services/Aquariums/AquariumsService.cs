@@ -73,6 +73,40 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
+        public async Task<Result<AquariumDetailsDto>> GetDetails(Guid aquariumId)
+        {
+            try
+            {
+                var item = await _context.Aquariums
+                    .Where(item => item.Id == aquariumId && item.DeletedAt == null)
+                    .Select(item => new AquariumDetailsDto()
+                    {
+                        Id = item.Id,
+                        Name = item.Name,
+                        Volume = item.Volume,
+                        CreationDate = item.CreationDate,
+                        PhotosCount = item.Photos.Where(photo => photo.DeletedAt == null).Count(),
+                        LastPhotoId = item.Photos
+                                            .OrderByDescending(photo => photo.CreatedAt)
+                                            .Select(photo => (Guid?)photo.Id)
+                                            .FirstOrDefault()
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (item is null)
+                {
+                    return Result.Failure("Nie znaleziono akwarium o podanym identyfikatorze!", ProblemType.NotFound);
+                }
+
+                return Result.Success(item);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get list of all aquariums");
+                return Result.Failure("Można pobrać akwariów z bazy danych!", ProblemType.InternalServerError);
+            }
+        }
+
         public async Task<Result<AquariumBaseDataDto>> GetForEdit(Guid aquariumId)
         {
             try
