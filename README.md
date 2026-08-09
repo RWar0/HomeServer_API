@@ -86,6 +86,23 @@ If you prefer Visual Studio Package Manager Console:
 Update-Database -Project HomeServer.Infrastructure -StartupProject HomeServer.API
 ```
 
+## CLI Commands
+
+### Create User using CLI command
+
+Be sure that you are in API directory:
+```powershell
+cd .\HomeServer.API\
+```
+
+Then start CLI command feature:
+```powershell
+dotnet dotnet run -- user
+```
+
+After this command, fields will appear for you to enter your data.
+
+
 ## Run the API
 
 From the solution directory:
