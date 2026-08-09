@@ -37,7 +37,7 @@ HomeServer.Infrastructure  EF Core DbContext, migrations, file storage, entity c
 ## Requirements
 
 - .NET 8 SDK
-- SQL Server LocalDB or another SQL Server instance
+- PostgreSQL Server
 
 ## Configuration
 
