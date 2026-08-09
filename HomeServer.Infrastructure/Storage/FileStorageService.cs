@@ -44,6 +44,20 @@
             };
         }
 
+        public string GetFullFilePath(string relativePath)
+        {
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);
+        }
+
+        public bool IsFileExists(string relativePath)
+        {
+            var fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);
+
+            return File.Exists(fullPath);
+        }
+
+        public string GetExtension(string fullPath) => Path.GetExtension(fullPath);
+
         public async Task DeleteAsync(string relativePath)
         {
             var fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);

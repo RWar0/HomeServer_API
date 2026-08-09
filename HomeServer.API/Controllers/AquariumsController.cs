@@ -1,4 +1,5 @@
 ﻿using HomeServer.API.Common.Extensions;
+using HomeServer.Application.Common.Pagination;
 using HomeServer.Application.Dtos.Aquariums;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Interfaces.Aquariums;
@@ -47,8 +48,16 @@ namespace HomeServer.API.Controllers
 
             return result.ToActionResult(this);
         }
+        
+        [HttpGet("{aquariumId}/photos")]
+        public async Task<ActionResult<AquariumGetResponseDto[]>> GetAquariumPhotos([FromRoute] Guid aquariumId, [FromQuery] BasePaginationDto paginationDto)
+        {
+            var result = await _aquariumsService.GetPhotos(aquariumId, paginationDto);
 
-        [HttpGet("for-edit/{aquariumId}")]
+            return result.ToActionResult(this);
+        }
+
+        [HttpGet("{aquariumId}/for-edit")]
         public async Task<ActionResult<AquariumGetResponseDto[]>> GetAquariumForEdit([FromRoute] Guid aquariumId)
         {
             var result = await _aquariumsService.GetForEdit(aquariumId);
@@ -64,7 +73,7 @@ namespace HomeServer.API.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpPut("update/{aquariumId}")]
+        [HttpPut("{aquariumId}")]
         public async Task<ActionResult<AquariumGetResponseDto[]>> Update([FromRoute] Guid aquariumId, AquariumCreateDto editDto)
         {
             var result = await _aquariumsService.Update(aquariumId, editDto);
@@ -77,6 +86,15 @@ namespace HomeServer.API.Controllers
         public async Task<ActionResult<MessageResponseDto>> Delete([FromRoute] Guid aquariumId)
         {
             var result = await _aquariumsService.Delete(aquariumId);
+
+            return result.ToActionResult(this);
+        }
+
+        [HttpDelete("{aquariumId}/photo/{photoId}")]
+        [Authorize(Roles = $"{nameof(RolesEnum.Admin)},{nameof(RolesEnum.Moderator)}")]
+        public async Task<ActionResult<MessageResponseDto>> DeletePhoto([FromRoute] Guid aquariumId, [FromRoute] Guid photoId)
+        {
+            var result = await _aquariumsService.DeletePhoto(aquariumId, photoId);
 
             return result.ToActionResult(this);
         }

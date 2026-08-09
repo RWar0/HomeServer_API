@@ -1,4 +1,5 @@
 ﻿using HomeServer.Application.Base;
+using HomeServer.Application.Common.Pagination;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Aquariums;
 using HomeServer.Application.Dtos.Common;
@@ -58,6 +59,7 @@ namespace HomeServer.Application.Services.Aquariums
                         Volume = item.Volume,
                         CreationDate = item.CreationDate,
                         LastPhotoId = item.Photos
+                                            .Where(photo => photo.DeletedAt == null)
                                             .OrderByDescending(photo => photo.CreatedAt)
                                             .Select(photo => (Guid?)photo.Id)
                                             .FirstOrDefault()
@@ -87,6 +89,7 @@ namespace HomeServer.Application.Services.Aquariums
                         CreationDate = item.CreationDate,
                         PhotosCount = item.Photos.Where(photo => photo.DeletedAt == null).Count(),
                         LastPhotoId = item.Photos
+                                            .Where(photo => photo.DeletedAt == null)
                                             .OrderByDescending(photo => photo.CreatedAt)
                                             .Select(photo => (Guid?)photo.Id)
                                             .FirstOrDefault()
@@ -104,6 +107,51 @@ namespace HomeServer.Application.Services.Aquariums
             {
                 _logger.LogError(ex, "Cannot get list of all aquariums");
                 return Result.Failure("Można pobrać akwariów z bazy danych!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<PagedResult<AquariumPhotosResponseDto>>> GetPhotos(Guid aquariumId, BasePaginationDto paginationDto)
+        {
+            try
+            {
+                var photosQuery = _context.Aquariums
+                    .Where(item => item.Id == aquariumId && item.DeletedAt == null)
+                    .SelectMany(item => item.Photos)
+                    .Where(photo => photo.DeletedAt == null);
+
+                var totalQuantity = await photosQuery.CountAsync();
+
+                var result = await photosQuery
+                    .Select(photo => new AquariumPhotosResponseDto
+                    {
+                        Id = photo.Id,
+                        OriginalName = photo.OriginalName,
+                        CreatedAt = photo.CreatedAt,
+                        CreatedBy = _context.Users
+                            .Where(user => user.Id == photo.CreatedByUserId)
+                            .Select(user => user.Name)
+                            .FirstOrDefault() ?? "Brak informacji"
+                    })
+                    .OrderByDescending(item => item.CreatedAt)
+                    .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
+                    .Take(paginationDto.PageSize)
+                    .ToListAsync();
+
+                return Result.Success(new PagedResult<AquariumPhotosResponseDto>
+                {
+                    Data = result,
+                    Pagination = new()
+                    {
+                        Page = paginationDto.Page,
+                        PageSize = paginationDto.PageSize,
+                        TotalCount = totalQuantity,
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get photos of aquariums aquarium with Id: {aquariumId}", aquariumId);
+                return Result.Failure("Można pobrać zdjęć akwarium z podanym identyfikatorem!", ProblemType.InternalServerError);
             }
         }
 
@@ -285,6 +333,37 @@ namespace HomeServer.Application.Services.Aquariums
             {
                 _logger.LogError(ex, "Cannot delete aquarium with Id: {AquariumId}", aquariumId);
                 return Result.Failure("Nie można usunąć akwarium!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<MessageResponseDto>> DeletePhoto(Guid aquariumId, Guid photoId)
+        {
+            try
+            {
+                var photo = await _context.Aquariums
+                    .Where(aquarium => aquarium.Id == aquariumId && aquarium.DeletedAt == null)
+                    .SelectMany(aquarium => aquarium.Photos)
+                    .FirstOrDefaultAsync(photo => photo.Id == photoId && photo.DeletedAt == null);
+
+                if (photo is null)
+                {
+                    return Result.Failure("Nie znaleziono zdjęcia o podanym identyfikatorze!", ProblemType.NotFound);
+                }
+
+                photo.DeletedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                await _fileStorageService.DeleteAsync(photo.RelativePath);
+
+                return Result.Success(new MessageResponseDto()
+                {
+                    Message = "Zdjęcie zostało poprawnie usunięte z akwarium"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot delete photo with Id: {PhotoId}, from aquarium with Id: {AquariumId}", photoId, aquariumId);
+                return Result.Failure("Nie można usunąć zdjęcia akwarium!", ProblemType.InternalServerError);
             }
         }
     }

@@ -16,7 +16,7 @@ namespace HomeServer.API.Controllers
             _fileService = fileService;
         }
 
-        [HttpGet("images/{photoId}")]
+        [HttpGet("image/{photoId}")]
         public async Task<IActionResult> GetImage([FromRoute] Guid photoId)
         {
             var result = await _fileService.GetImage(photoId);
@@ -26,9 +26,7 @@ namespace HomeServer.API.Controllers
                 return result.ToActionResult(this);
             }
 
-            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, result.Value.RelativePath);
-
-            return PhysicalFile(filePath, result.Value.ContentType);
+            return PhysicalFile(result.Value.RelativePath, result.Value.ContentType);
         }
     }
 }
