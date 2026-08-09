@@ -12,6 +12,6 @@ namespace HomeServer.Domain.Models
         public DateTime? RefreshDate { get; set; } = null;
 
         // For race condition
-        public byte[] RowVersion { get; set; } = default!;
+        public uint Version { get; set; }
     }
 }

@@ -24,12 +24,13 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using HomeServer.Application.Interfaces.MyFiles;
 using HomeServer.Application.Services.MyFiles;
+using HomeServer.API.Commands;
 
 namespace HomeServer.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -82,7 +83,7 @@ namespace HomeServer.API
             var dbConnectionString = builder.Configuration.GetConnectionString("DatabaseConnection");
 
             builder.Services.AddDbContext<MyDbContext>(options =>
-                    options.UseSqlServer(
+                    options.UseNpgsql(
                         dbConnectionString,
                         b => b.MigrationsAssembly("HomeServer.Infrastructure")
                     ));
@@ -135,6 +136,10 @@ namespace HomeServer.API
             builder.Services.AddProblemDetails();
 
             var app = builder.Build();
+            if (args.Length > 0)
+            {
+                return await CommandRunner.RunAsync(args, app.Services);
+            }
 
             if (app.Environment.IsDevelopment())
             {
@@ -154,7 +159,8 @@ namespace HomeServer.API
 
             app.MapControllers();
 
-            app.Run();
+            await app.RunAsync();
+            return 0;
         }
     }
 }
