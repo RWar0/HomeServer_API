@@ -15,6 +15,7 @@ namespace HomeServer.Infrastructure.Data
         public required DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
         public required DbSet<StoredFile> StoredFiles { get; set; }
         public required DbSet<Aquarium> Aquariums { get; set; }
+        public required DbSet<WaterChange> WaterChanges { get; set; }
         #endregion
 
 

@@ -9,5 +9,6 @@ namespace HomeServer.Domain.Models
         public DateOnly CreationDate { get; set; }
 
         public ICollection<StoredFile> Photos { get; set; } = [];
+        public ICollection<WaterChange> WaterChanges { get; set; } = [];
     }
 }

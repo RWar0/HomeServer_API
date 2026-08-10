@@ -202,6 +202,37 @@ namespace HomeServer.Infrastructure.Migrations
                     b.ToTable("UserRefreshTokens");
                 });
 
+            modelBuilder.Entity("HomeServer.Domain.Models.WaterChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("AquariumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("ChangeDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AquariumId");
+
+                    b.ToTable("WaterChanges");
+                });
+
             modelBuilder.Entity("HomeServer.Domain.Models.StoredFile", b =>
                 {
                     b.HasOne("HomeServer.Domain.Models.Aquarium", null)
@@ -220,9 +251,22 @@ namespace HomeServer.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("HomeServer.Domain.Models.WaterChange", b =>
+                {
+                    b.HasOne("HomeServer.Domain.Models.Aquarium", "Aquarium")
+                        .WithMany("WaterChanges")
+                        .HasForeignKey("AquariumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Aquarium");
+                });
+
             modelBuilder.Entity("HomeServer.Domain.Models.Aquarium", b =>
                 {
                     b.Navigation("Photos");
+
+                    b.Navigation("WaterChanges");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.User", b =>
