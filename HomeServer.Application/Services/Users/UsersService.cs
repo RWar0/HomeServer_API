@@ -35,9 +35,7 @@ namespace HomeServer.Application.Services.Users
             {
 
                 var user = await _context.Users
-                    .Where(item => item.Id == userId &&
-                        item.DeletedAt == null
-                    )
+                    .Where(item => item.Id == userId)
                     .Select(item => new UserMyProfileDto()
                     {
                         Email = item.Email,

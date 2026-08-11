@@ -19,7 +19,7 @@ namespace HomeServer.Application.Services.WaterChanges
         {
             try
             {
-                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == aquariumId && item.DeletedAt == null);
+                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == aquariumId);
 
                 if (aquarium is null)
                 {
@@ -51,7 +51,7 @@ namespace HomeServer.Application.Services.WaterChanges
         {
             try
             {
-                var waterChanges = await _context.WaterChanges.Where(item => item.DeletedAt == null)
+                var waterChanges = await _context.WaterChanges
                                                 .Include(item => item.Aquarium)
                                                 .Select(item => new WaterChangesGetResponseDto
                                                 {
@@ -83,13 +83,12 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
-
         public async Task<Result<WaterChangeForEditResponseDto>> GetForEdit(Guid waterChangeId)
         {
             try
             {
                 var result = await _context.WaterChanges
-                    .Where(item => item.Id == waterChangeId && item.DeletedAt == null)
+                    .Where(item => item.Id == waterChangeId)
                     .Select(item => new WaterChangeForEditResponseDto
                     {
                         Id = item.Id,
@@ -116,7 +115,7 @@ namespace HomeServer.Application.Services.WaterChanges
         {
             try
             {
-                var waterChange = await _context.WaterChanges.FirstOrDefaultAsync(item => item.Id == waterChangeId && item.DeletedAt == null);
+                var waterChange = await _context.WaterChanges.FirstOrDefaultAsync(item => item.Id == waterChangeId);
 
                 if (waterChange is null)
                 {
@@ -144,14 +143,14 @@ namespace HomeServer.Application.Services.WaterChanges
         {
             try
             {
-                var waterChange = await _context.WaterChanges.FirstOrDefaultAsync(item => item.Id == waterChangeId && item.DeletedAt == null);
+                var waterChange = await _context.WaterChanges.FirstOrDefaultAsync(item => item.Id == waterChangeId);
 
                 if (waterChange is null)
                 {
                     return Result.Failure("Nie znaleziono podmiany wody z podanym identyfikatorem!", ProblemType.NotFound);
                 }
 
-                waterChange.DeletedAt = DateTime.UtcNow;
+                _context.Remove(waterChange);
 
                 await _context.SaveChangesAsync();
 

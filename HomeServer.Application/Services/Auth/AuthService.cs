@@ -29,7 +29,7 @@ namespace HomeServer.Application.Services.Auth
 
             // Get and Validate user
             var user = await _context.Users
-                    .Where(item => item.Username.Equals(loginUserDto.Login) && item.DeletedAt == null)
+                    .Where(item => item.Username.Equals(loginUserDto.Login))
                     .FirstOrDefaultAsync();
 
             if (user is null)
@@ -92,7 +92,6 @@ namespace HomeServer.Application.Services.Auth
             UserRefreshToken? currentSession = await _context.UserRefreshTokens
                     .Include(item => item.User)
                     .Where(item =>
-                        item.DeletedAt == null &&
                         item.RevokedAt == null &&
                         item.RefreshToken == oldHashedRefreshToken &&
                         item.User.Id == userId &&
@@ -159,7 +158,6 @@ namespace HomeServer.Application.Services.Auth
             UserRefreshToken? session = await _context.UserRefreshTokens
                 .Include(item => item.User)
                 .Where(item =>
-                    item.DeletedAt == null &&
                     item.RevokedAt == null &&
                     item.RefreshToken == hashedRefreshToken &&
                     item.User.Id == userId &&
@@ -185,7 +183,6 @@ namespace HomeServer.Application.Services.Auth
         {
             UserRefreshToken[] allUserSessions = await _context.UserRefreshTokens
                 .Where(item =>
-                    item.DeletedAt == null &&
                     item.RevokedAt == null &&
                     item.User.Id == userId &&
                     item.ExpiresAt > DateTime.UtcNow)

@@ -24,7 +24,7 @@ namespace HomeServer.Application.Services.MyFiles
             try
             {
                 var metaData = await _context.StoredFiles
-                    .Where(item => item.Id == photoId && item.DeletedAt == null)
+                    .Where(item => item.Id == photoId)
                     .FirstOrDefaultAsync();
 
                 if (metaData is null)

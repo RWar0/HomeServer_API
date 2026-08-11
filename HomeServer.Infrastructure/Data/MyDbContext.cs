@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using HomeServer.Domain.Models;
 using HomeServer.Domain.Base;
+using System.Linq.Expressions;
 
 namespace HomeServer.Infrastructure.Data
 {
@@ -22,22 +23,39 @@ namespace HomeServer.Infrastructure.Data
         #region Overrided Methods
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyDbContext).Assembly);
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (typeof(BaseModel).IsAssignableFrom(entityType.ClrType))
+                {
+                    modelBuilder.Entity(entityType.ClrType).HasQueryFilter(BuildNotDeletedQueryFilter(entityType.ClrType));
+                }
+            }
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var entries = ChangeTracker
-                .Entries()
-                .Where(e => e.Entity is BaseModel && (e.State == EntityState.Added || e.State == EntityState.Modified));
+                .Entries<BaseModel>();
 
             foreach (var entityEntry in entries)
             {
-                ((BaseModel)entityEntry.Entity).UpdatedAt = DateTime.UtcNow;
-
                 if (entityEntry.State == EntityState.Added)
                 {
-                    ((BaseModel)entityEntry.Entity).CreatedAt = DateTime.UtcNow;
+                    entityEntry.Entity.CreatedAt = DateTime.UtcNow;
+                }
+                else if (entityEntry.State == EntityState.Modified)
+                {
+                    entityEntry.Entity.UpdatedAt = DateTime.UtcNow;
+                }
+                else if (entityEntry.State == EntityState.Deleted)
+                {
+                    entityEntry.State = EntityState.Modified;
+                    entityEntry.Entity.UpdatedAt = DateTime.UtcNow;
+                    entityEntry.Entity.DeletedAt = DateTime.UtcNow;
                 }
             }
 
@@ -45,5 +63,20 @@ namespace HomeServer.Infrastructure.Data
         }
         #endregion
 
+
+        #region Helpers
+        private static LambdaExpression BuildNotDeletedQueryFilter(Type entityType)
+        {
+            var parameter = Expression.Parameter(entityType, "e");
+
+            var deletedAt = Expression.Property(parameter, nameof(BaseModel.DeletedAt));
+
+            var nullConstant = Expression.Constant(null, typeof(DateTime?));
+
+            var body = Expression.Equal(deletedAt, nullConstant);
+
+            return Expression.Lambda(body, parameter);
+        }
+        #endregion
     }
 }

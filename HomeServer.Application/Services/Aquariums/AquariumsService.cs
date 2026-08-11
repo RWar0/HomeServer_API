@@ -53,7 +53,6 @@ namespace HomeServer.Application.Services.Aquariums
             try
             {
                 var items = await _context.Aquariums
-                    .Where(item => item.DeletedAt == null)
                     .Select(item => new AquariumGetResponseDto()
                     {
                         Id = item.Id,
@@ -61,12 +60,10 @@ namespace HomeServer.Application.Services.Aquariums
                         Volume = item.Volume,
                         CreationDate = item.CreationDate,
                         LastPhotoId = item.Photos
-                                            .Where(photo => photo.DeletedAt == null)
                                             .OrderByDescending(photo => photo.CreatedAt)
                                             .Select(photo => (Guid?)photo.Id)
                                             .FirstOrDefault(),
                         LastWaterChange = item.WaterChanges
-                            .Where(waterChange => waterChange.DeletedAt == null)
                             .OrderByDescending(waterChange => waterChange.ChangeDate)
                             .Select(waterChange => (DateOnly?)waterChange.ChangeDate)
                             .FirstOrDefault()
@@ -87,21 +84,19 @@ namespace HomeServer.Application.Services.Aquariums
             try
             {
                 var item = await _context.Aquariums
-                    .Where(item => item.Id == aquariumId && item.DeletedAt == null)
+                    .Where(item => item.Id == aquariumId)
                     .Select(item => new AquariumDetailsDto()
                     {
                         Id = item.Id,
                         Name = item.Name,
                         Volume = item.Volume,
                         CreationDate = item.CreationDate,
-                        PhotosCount = item.Photos.Where(photo => photo.DeletedAt == null).Count(),
+                        PhotosCount = item.Photos.Count(),
                         LastPhotoId = item.Photos
-                                            .Where(photo => photo.DeletedAt == null)
                                             .OrderByDescending(photo => photo.CreatedAt)
                                             .Select(photo => (Guid?)photo.Id)
                                             .FirstOrDefault(),
                         LastWaterChange = item.WaterChanges
-                            .Where(waterChange => waterChange.DeletedAt == null)
                             .OrderByDescending(waterChange => waterChange.ChangeDate)
                             .Select(waterChange => (DateOnly?)waterChange.ChangeDate)
                             .FirstOrDefault()
@@ -127,9 +122,8 @@ namespace HomeServer.Application.Services.Aquariums
             try
             {
                 var photosQuery = _context.Aquariums
-                    .Where(item => item.Id == aquariumId && item.DeletedAt == null)
-                    .SelectMany(item => item.Photos)
-                    .Where(photo => photo.DeletedAt == null);
+                    .Where(item => item.Id == aquariumId)
+                    .SelectMany(item => item.Photos);
 
                 var totalQuantity = await photosQuery.CountAsync();
 
@@ -143,6 +137,7 @@ namespace HomeServer.Application.Services.Aquariums
                         OriginalName = photo.OriginalName,
                         CreatedAt = photo.CreatedAt,
                         CreatedBy = _context.Users
+                            .IgnoreQueryFilters()
                             .Where(user => user.Id == photo.CreatedByUserId)
                             .Select(user => user.Name)
                             .FirstOrDefault() ?? "Brak informacji"
@@ -173,14 +168,14 @@ namespace HomeServer.Application.Services.Aquariums
         {
             try
             {
-                var isAquariumExists = await _context.Aquariums.AnyAsync(item => item.Id == aquariumId && item.DeletedAt == null);
+                var isAquariumExists = await _context.Aquariums.AnyAsync(item => item.Id == aquariumId);
 
                 if (!isAquariumExists)
                 {
                     return Result.Failure("Akwarium o podanym identyfikatorze nie istnieje!", ProblemType.NotFound);
                 }
 
-                var baseQuery = _context.WaterChanges.AsNoTracking().Where(item => item.Aquarium.Id == aquariumId && item.DeletedAt == null);
+                var baseQuery = _context.WaterChanges.AsNoTracking().Where(item => item.Aquarium.Id == aquariumId);
 
                 var totalCount = await baseQuery.CountAsync();
 
@@ -222,9 +217,7 @@ namespace HomeServer.Application.Services.Aquariums
             try
             {
                 var aquarium = await _context.Aquariums
-                    .Where(item =>
-                        item.Id == aquariumId &&
-                        item.DeletedAt == null)
+                    .Where(item => item.Id == aquariumId)
                     .Select(item => new AquariumBaseDataDto()
                     {
                         Id = item.Id,
@@ -252,7 +245,7 @@ namespace HomeServer.Application.Services.Aquariums
         {
             try
             {
-                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == aquariumId && item.DeletedAt == null);
+                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == aquariumId);
 
                 if (aquarium is null)
                 {
@@ -272,7 +265,7 @@ namespace HomeServer.Application.Services.Aquariums
         {
             try
             {
-                var aquarium = await _context.Aquariums.Include(item => item.Photos).Where(item => item.Id == aquariumId && item.DeletedAt == null).FirstOrDefaultAsync();
+                var aquarium = await _context.Aquariums.Include(item => item.Photos).Where(item => item.Id == aquariumId).FirstOrDefaultAsync();
 
                 if (aquarium is null)
                 {
@@ -353,8 +346,6 @@ namespace HomeServer.Application.Services.Aquariums
                 aquarium.Volume = editDto.Volume;
                 aquarium.CreationDate = editDto.CreationDate;
 
-                aquarium.UpdatedAt = DateTime.UtcNow;
-
                 await _context.SaveChangesAsync();
 
                 return Result.Success(new MessageResponseDto
@@ -365,7 +356,7 @@ namespace HomeServer.Application.Services.Aquariums
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Cannot update aquarium with Id: {AquariumId}", aquariumId);
-                return Result.Failure("Można zaktualizować akwarium!", ProblemType.InternalServerError);
+                return Result.Failure("Nie można zaktualizować akwarium!", ProblemType.InternalServerError);
             }
         }
 
@@ -382,7 +373,7 @@ namespace HomeServer.Application.Services.Aquariums
 
                 var aquarium = aquariumResult.Value;
 
-                aquarium.DeletedAt = DateTime.UtcNow;
+                _context.Remove(aquarium);
 
                 await _context.SaveChangesAsync();
 
@@ -403,16 +394,17 @@ namespace HomeServer.Application.Services.Aquariums
             try
             {
                 var photo = await _context.Aquariums
-                    .Where(aquarium => aquarium.Id == aquariumId && aquarium.DeletedAt == null)
+                    .Where(aquarium => aquarium.Id == aquariumId)
                     .SelectMany(aquarium => aquarium.Photos)
-                    .FirstOrDefaultAsync(photo => photo.Id == photoId && photo.DeletedAt == null);
+                    .FirstOrDefaultAsync(photo => photo.Id == photoId);
 
                 if (photo is null)
                 {
                     return Result.Failure("Nie znaleziono zdjęcia o podanym identyfikatorze!", ProblemType.NotFound);
                 }
 
-                photo.DeletedAt = DateTime.UtcNow;
+                _context.Remove(photo);
+
                 await _context.SaveChangesAsync();
 
                 await _fileStorageService.DeleteAsync(photo.RelativePath);
