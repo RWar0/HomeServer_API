@@ -1,8 +1,10 @@
 ﻿using HomeServer.Application.Base;
+using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Pagination;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Aquariums;
 using HomeServer.Application.Dtos.Common;
+using HomeServer.Application.Dtos.WaterChanges;
 using HomeServer.Application.Interfaces.Aquariums;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
@@ -62,7 +64,12 @@ namespace HomeServer.Application.Services.Aquariums
                                             .Where(photo => photo.DeletedAt == null)
                                             .OrderByDescending(photo => photo.CreatedAt)
                                             .Select(photo => (Guid?)photo.Id)
-                                            .FirstOrDefault()
+                                            .FirstOrDefault(),
+                        LastWaterChange = item.WaterChanges
+                            .Where(waterChange => waterChange.DeletedAt == null)
+                            .OrderByDescending(waterChange => waterChange.ChangeDate)
+                            .Select(waterChange => (DateOnly?)waterChange.ChangeDate)
+                            .FirstOrDefault()
                     })
                     .ToListAsync();
 
@@ -71,7 +78,7 @@ namespace HomeServer.Application.Services.Aquariums
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Cannot get list of all aquariums");
-                return Result.Failure("Można pobrać akwariów z bazy danych!", ProblemType.InternalServerError);
+                return Result.Failure("Nie można pobrać akwariów z bazy danych!", ProblemType.InternalServerError);
             }
         }
 
@@ -92,7 +99,12 @@ namespace HomeServer.Application.Services.Aquariums
                                             .Where(photo => photo.DeletedAt == null)
                                             .OrderByDescending(photo => photo.CreatedAt)
                                             .Select(photo => (Guid?)photo.Id)
-                                            .FirstOrDefault()
+                                            .FirstOrDefault(),
+                        LastWaterChange = item.WaterChanges
+                            .Where(waterChange => waterChange.DeletedAt == null)
+                            .OrderByDescending(waterChange => waterChange.ChangeDate)
+                            .Select(waterChange => (DateOnly?)waterChange.ChangeDate)
+                            .FirstOrDefault()
                     })
                     .FirstOrDefaultAsync();
 
@@ -110,7 +122,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<PagedResult<AquariumPhotosResponseDto>>> GetPhotos(Guid aquariumId, BasePaginationDto paginationDto)
+        public async Task<Result<PagedResult<AquariumPhotosResponseDto>>> GetPhotos(Guid aquariumId, PaginationDto paginationDto)
         {
             try
             {
@@ -122,6 +134,9 @@ namespace HomeServer.Application.Services.Aquariums
                 var totalQuantity = await photosQuery.CountAsync();
 
                 var result = await photosQuery
+                    .OrderByDescending(item => item.CreatedAt)
+                    .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
+                    .Take(paginationDto.PageSize)
                     .Select(photo => new AquariumPhotosResponseDto
                     {
                         Id = photo.Id,
@@ -132,9 +147,6 @@ namespace HomeServer.Application.Services.Aquariums
                             .Select(user => user.Name)
                             .FirstOrDefault() ?? "Brak informacji"
                     })
-                    .OrderByDescending(item => item.CreatedAt)
-                    .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
-                    .Take(paginationDto.PageSize)
                     .ToListAsync();
 
                 return Result.Success(new PagedResult<AquariumPhotosResponseDto>
@@ -145,6 +157,8 @@ namespace HomeServer.Application.Services.Aquariums
                         Page = paginationDto.Page,
                         PageSize = paginationDto.PageSize,
                         TotalCount = totalQuantity,
+                        SortBy = paginationDto.SortBy,
+                        SortDirection = paginationDto.SortDirection,
                     }
                 });
             }
@@ -152,6 +166,54 @@ namespace HomeServer.Application.Services.Aquariums
             {
                 _logger.LogError(ex, "Cannot get photos of aquariums aquarium with Id: {aquariumId}", aquariumId);
                 return Result.Failure("Można pobrać zdjęć akwarium z podanym identyfikatorem!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<PagedResult<WaterChangesOfAquariumGetResponseDto>>> GetWaterChanges(Guid aquariumId, PaginationDto paginationDto)
+        {
+            try
+            {
+                var isAquariumExists = await _context.Aquariums.AnyAsync(item => item.Id == aquariumId && item.DeletedAt == null);
+
+                if (!isAquariumExists)
+                {
+                    return Result.Failure("Akwarium o podanym identyfikatorze nie istnieje!", ProblemType.NotFound);
+                }
+
+                var baseQuery = _context.WaterChanges.AsNoTracking().Where(item => item.Aquarium.Id == aquariumId && item.DeletedAt == null);
+
+                var totalCount = await baseQuery.CountAsync();
+
+                baseQuery = ApplySortingForWaterChange(baseQuery, paginationDto);
+
+                var waterChanges = await baseQuery
+                    .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
+                    .Take(paginationDto.PageSize)
+                    .Select(item => new WaterChangesOfAquariumGetResponseDto()
+                    {
+                        Id = item.Id,
+                        Amount = item.Amount,
+                        ChangeDate = item.ChangeDate,
+                    })
+                    .ToListAsync();
+
+                return Result<PagedResult<WaterChangesOfAquariumGetResponseDto>>.Success(new()
+                {
+                    Data = waterChanges,
+                    Pagination = new()
+                    {
+                        Page = paginationDto.Page,
+                        PageSize = paginationDto.PageSize,
+                        TotalCount = totalCount,
+                        SortBy = paginationDto.SortBy,
+                        SortDirection = paginationDto.SortDirection,
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get list of aquarium with Id: {AquariumId} water changes", aquariumId);
+                return Result.Failure("Nie można pobrać listy podmian wody podanego akwarium z bazy danych!", ProblemType.InternalServerError);
             }
         }
 
@@ -365,6 +427,23 @@ namespace HomeServer.Application.Services.Aquariums
                 _logger.LogError(ex, "Cannot delete photo with Id: {PhotoId}, from aquarium with Id: {AquariumId}", photoId, aquariumId);
                 return Result.Failure("Nie można usunąć zdjęcia akwarium!", ProblemType.InternalServerError);
             }
+        }
+
+        // Helpers
+        private static IQueryable<WaterChange> ApplySortingForWaterChange(IQueryable<WaterChange> query, PaginationDto paginationDto)
+        {
+            return paginationDto.SortBy?.ToLower() switch
+            {
+                "amount" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Amount)
+                    : query.OrderBy(x => x.Amount),
+
+                "changedate" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.ChangeDate)
+                    : query.OrderBy(x => x.ChangeDate),
+
+                _ => query
+            };
         }
     }
 }

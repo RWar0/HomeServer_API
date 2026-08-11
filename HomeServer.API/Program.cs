@@ -25,6 +25,8 @@ using Microsoft.AspNetCore.Mvc;
 using HomeServer.Application.Interfaces.MyFiles;
 using HomeServer.Application.Services.MyFiles;
 using HomeServer.API.Commands;
+using HomeServer.Application.Interfaces.WaterChanges;
+using HomeServer.Application.Services.WaterChanges;
 
 namespace HomeServer.API
 {
@@ -105,13 +107,13 @@ namespace HomeServer.API
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
 
-            builder.Services.AddScoped<IUsersService, UsersService>();
-            builder.Services.AddScoped<IAquariumsService, AquariumsService>();
             builder.Services.AddScoped<IFileService, FileService>();
-
-
+            
+            builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+            builder.Services.AddScoped<IAquariumsService, AquariumsService>();
+            builder.Services.AddScoped<IWaterChangesService, WaterChangesService>();
             #endregion
 
             builder.Services.AddCors(options =>

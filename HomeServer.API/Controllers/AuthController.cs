@@ -20,15 +20,13 @@ namespace HomeServer.API.Controllers
         private readonly IAuthService _authService;
         private readonly ICurrentUserService _currentUserService;
         private readonly JwtOptions _jwtOptions;
-        private readonly IWebHostEnvironment _env;
 
-        public AuthController(IAuthService authService, ICurrentUserService currentUserService, IOptions<JwtOptions> jwtOptions, IWebHostEnvironment env)
+        public AuthController(IAuthService authService, ICurrentUserService currentUserService, IOptions<JwtOptions> jwtOptions)
         {
             _authService = authService;
             _currentUserService = currentUserService;
 
             _jwtOptions = jwtOptions.Value;
-            _env = env;
         }
 
         [EnableRateLimiting(RateLimitingConstants.Login)]
