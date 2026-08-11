@@ -22,8 +22,16 @@ namespace HomeServer.API.Controllers
             _waterChangesService = waterChangesService;
         }
 
+        [HttpPost]
+        public async Task<ActionResult<MessageResponseDto>> CreateWaterChange(WaterChangeCreateEditDto createDto)
+        {
+            var result = await _waterChangesService.CreateWaterChange(createDto);
+
+            return result.ToActionResult(this);
+        }
+        
         [HttpPost("for-aquarium/{aquariumId}")]
-        public async Task<ActionResult<MessageResponseDto>> CreateWaterChangeForAquarium([FromRoute] Guid aquariumId, WaterChangeCreateEditDto createDto)
+        public async Task<ActionResult<MessageResponseDto>> CreateWaterChangeForAquarium([FromRoute] Guid aquariumId, WaterChangeCreateEditForAquariumDto createDto)
         {
             var result = await _waterChangesService.CreateWaterChangeForAquarium(aquariumId, createDto);
 
@@ -45,9 +53,24 @@ namespace HomeServer.API.Controllers
 
             return result.ToActionResult(this);
         }
+        
+        [HttpGet("{waterChangeId}/for-aquarium-edit")]
+        public async Task<ActionResult<WaterChangeForAquariumEditResponseDto>> GetForAquariumEdit([FromRoute] Guid waterChangeId)
+        {
+            var result = await _waterChangesService.GetForEdit(waterChangeId);
+
+            return result.ToActionResult(this);
+        }
 
         [HttpPut("{waterChangeId}")]
-        public async Task<ActionResult<MessageResponseDto>> UpdateWaterChangeOfAquarium([FromRoute] Guid waterChangeId, WaterChangeCreateEditDto editDto)
+        public async Task<ActionResult<MessageResponseDto>> UpdateWaterChange([FromRoute] Guid waterChangeId, WaterChangeCreateEditDto editDto)
+        {
+            var result = await _waterChangesService.UpdateWaterChange(waterChangeId, editDto);
+
+            return result.ToActionResult(this);
+        }
+        [HttpPut("for-aquarium/{waterChangeId}")]
+        public async Task<ActionResult<MessageResponseDto>> UpdateWaterChangeOfAquarium([FromRoute] Guid waterChangeId, WaterChangeCreateEditForAquariumDto editDto)
         {
             var result = await _waterChangesService.UpdateWaterChangeOfAquarium(waterChangeId, editDto);
 

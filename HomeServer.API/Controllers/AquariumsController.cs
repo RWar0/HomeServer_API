@@ -1,5 +1,6 @@
 ﻿using HomeServer.API.Common.Extensions;
 using HomeServer.Application.Common.Pagination;
+using HomeServer.Application.Common.Select;
 using HomeServer.Application.Dtos.Aquariums;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Interfaces.Aquariums;
@@ -34,9 +35,17 @@ namespace HomeServer.API.Controllers
         }
 
         [HttpGet("list")]
-        public async Task<ActionResult<AquariumGetResponseDto[]>> GetAquariums()
+        public async Task<ActionResult<AquariumGetResponseDto[]>> GetAll()
         {
             var result = await _aquariumsService.GetAll();
+
+            return result.ToActionResult(this);
+        }
+        
+        [HttpGet("for-select")]
+        public async Task<ActionResult<SelectResponseDto[]>> GetForSelect()
+        {
+            var result = await _aquariumsService.GetForSelect();
 
             return result.ToActionResult(this);
         }

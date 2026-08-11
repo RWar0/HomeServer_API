@@ -2,6 +2,7 @@
 using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Pagination;
 using HomeServer.Application.Common.Results;
+using HomeServer.Application.Common.Select;
 using HomeServer.Application.Dtos.Aquariums;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.WaterChanges;
@@ -67,6 +68,27 @@ namespace HomeServer.Application.Services.Aquariums
                             .OrderByDescending(waterChange => waterChange.ChangeDate)
                             .Select(waterChange => (DateOnly?)waterChange.ChangeDate)
                             .FirstOrDefault()
+                    })
+                    .ToListAsync();
+
+                return Result.Success(items.ToArray());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get list of all aquariums");
+                return Result.Failure("Nie można pobrać akwariów z bazy danych!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<SelectResponseDto[]>> GetForSelect()
+        {
+            try
+            {
+                var items = await _context.Aquariums
+                    .Select(item => new SelectResponseDto()
+                    {
+                        Id = item.Id,
+                        Name = item.Name,
                     })
                     .ToListAsync();
 
@@ -434,7 +456,7 @@ namespace HomeServer.Application.Services.Aquariums
                     ? query.OrderByDescending(x => x.ChangeDate)
                     : query.OrderBy(x => x.ChangeDate),
 
-                _ => query
+                _ => query.OrderByDescending(x => x.ChangeDate)
             };
         }
     }

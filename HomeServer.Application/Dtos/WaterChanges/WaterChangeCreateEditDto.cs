@@ -12,5 +12,8 @@ namespace HomeServer.Application.Dtos.WaterChanges
         [Required(AllowEmptyStrings = false, ErrorMessage = "Data podmiany jest wymagana!")]
         [NotFutureDate(Name = "Data podmiany")]
         public DateOnly ChangeDate { get; set; }
+
+        [Required(AllowEmptyStrings = false, ErrorMessage = "Akwarium jest wymagane!")]
+        public Guid AquariumId { get; set; }
     }
 }
