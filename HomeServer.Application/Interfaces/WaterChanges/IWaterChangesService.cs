@@ -9,7 +9,7 @@ namespace HomeServer.Application.Interfaces.WaterChanges
     {
         public Task<Result<MessageResponseDto>> CreateWaterChange(WaterChangeCreateEditDto createDto);
         public Task<Result<MessageResponseDto>> CreateWaterChangeForAquarium(Guid aquariumId, WaterChangeCreateEditForAquariumDto createDto);
-        public Task<Result<PagedResult<WaterChangesGetResponseDto>>> GetAll(PaginationDto paginationDto);
+        public Task<Result<PagedResult<WaterChangesGetResponseDto>>> GetAll(PaginationDto paginationDto, WaterChangeListFiltrationDto filterDto);
         public Task<Result<WaterChangeForEditResponseDto>> GetForEdit(Guid waterChangeId);
         public Task<Result<WaterChangeForAquariumEditResponseDto>> GetForAquariumEdit(Guid waterChangeId);
         public Task<Result<MessageResponseDto>> UpdateWaterChange(Guid waterChangeId, WaterChangeCreateEditDto editDto);

@@ -80,11 +80,13 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
-        public async Task<Result<PagedResult<WaterChangesGetResponseDto>>> GetAll(PaginationDto paginationDto)
+        public async Task<Result<PagedResult<WaterChangesGetResponseDto>>> GetAll(PaginationDto paginationDto, WaterChangeListFiltrationDto filterDto)
         {
             try
             {
                 var baseQuery = _context.WaterChanges.AsNoTracking();
+
+                baseQuery = ApplyFiltrationForWaterChange(baseQuery, filterDto);
 
                 var totalCount = await baseQuery.CountAsync();
 
@@ -152,7 +154,7 @@ namespace HomeServer.Application.Services.WaterChanges
                 return Result.Failure("Nie można pobrać podanej podmiany wody!", ProblemType.InternalServerError);
             }
         }
-        
+
         public async Task<Result<WaterChangeForAquariumEditResponseDto>> GetForAquariumEdit(Guid waterChangeId)
         {
             try
@@ -216,7 +218,7 @@ namespace HomeServer.Application.Services.WaterChanges
                 return Result.Failure("Nie można edytować podanej podmiany wody!", ProblemType.InternalServerError);
             }
         }
-        
+
         public async Task<Result<MessageResponseDto>> UpdateWaterChangeOfAquarium(Guid waterChangeId, WaterChangeCreateEditForAquariumDto editDto)
         {
             try
@@ -289,6 +291,26 @@ namespace HomeServer.Application.Services.WaterChanges
 
                 _ => query.OrderByDescending(x => x.ChangeDate)
             };
+        }
+
+        private static IQueryable<WaterChange> ApplyFiltrationForWaterChange(IQueryable<WaterChange> query, WaterChangeListFiltrationDto filterDto)
+        {
+            if (filterDto.AquariumId.HasValue)
+            {
+                query = query.Where(item => item.Aquarium.Id == filterDto.AquariumId.Value);
+            }
+
+            if (filterDto.fromDate.HasValue)
+            {
+                query = query.Where(item => item.ChangeDate > filterDto.fromDate.Value);
+            }
+
+            if (filterDto.toDate.HasValue)
+            {
+                query = query.Where(item => item.ChangeDate <= filterDto.toDate.Value.AddDays(1));
+            }
+
+            return query;
         }
     }
 }

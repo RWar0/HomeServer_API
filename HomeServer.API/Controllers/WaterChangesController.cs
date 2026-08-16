@@ -39,9 +39,9 @@ namespace HomeServer.API.Controllers
         }
 
         [HttpGet("list")]
-        public async Task<ActionResult<PagedResult<WaterChangesGetResponseDto>>> GetList([FromQuery] PaginationDto paginationDto)
+        public async Task<ActionResult<PagedResult<WaterChangesGetResponseDto>>> GetList([FromQuery] PaginationDto paginationDto, [FromQuery] WaterChangeListFiltrationDto filterDto)
         {
-            var result = await _waterChangesService.GetAll(paginationDto);
+            var result = await _waterChangesService.GetAll(paginationDto, filterDto);
 
             return result.ToActionResult(this);
         }
