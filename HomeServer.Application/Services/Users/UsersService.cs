@@ -1,4 +1,5 @@
 ﻿using HomeServer.Application.Base;
+using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Users;
 using HomeServer.Application.Interfaces.Users;
@@ -19,16 +20,16 @@ namespace HomeServer.Application.Services.Users
             _cache = cache;
         }
 
-        public async Task<Result<UserMyProfileDto>> GetUserMyProfile(Guid userId)
+        public async Task<Result<MyProfileResponseDto>> GetMyProfileAsync(Guid userId)
         {
             string cacheKey = $"{USER_CACHE_KEY}:{userId}";
 
             if (_cache.TryGetValue(cacheKey, out var cachedUserObj) &&
                     cachedUserObj != null &&
-                    cachedUserObj is UserMyProfileDto cachedUser
+                    cachedUserObj is MyProfileResponseDto cachedUser
                 )
             {
-                return Result<UserMyProfileDto>.Success(cachedUser);
+                return Result<MyProfileResponseDto>.Success(cachedUser);
             }
 
             try
@@ -36,7 +37,7 @@ namespace HomeServer.Application.Services.Users
 
                 var user = await _context.Users
                     .Where(item => item.Id == userId)
-                    .Select(item => new UserMyProfileDto()
+                    .Select(item => new MyProfileResponseDto()
                     {
                         Email = item.Email,
                         Name = item.Name,
@@ -55,7 +56,7 @@ namespace HomeServer.Application.Services.Users
                     SlidingExpiration = TimeSpan.FromMinutes(2)
                 });
 
-                return Result<UserMyProfileDto>.Success(user);
+                return Result<MyProfileResponseDto>.Success(user);
             }
             catch (Exception ex)
             {

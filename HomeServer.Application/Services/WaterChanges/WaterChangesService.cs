@@ -1,8 +1,8 @@
 ﻿using HomeServer.Application.Base;
 using HomeServer.Application.Common.Enums;
-using HomeServer.Application.Common.Pagination;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Common;
+using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.WaterChanges;
 using HomeServer.Application.Interfaces.WaterChanges;
 using HomeServer.Domain.Models;
@@ -16,7 +16,7 @@ namespace HomeServer.Application.Services.WaterChanges
     {
         public WaterChangesService(MyDbContext context, ILogger<WaterChangesService> logger) : base(context, logger) { }
 
-        public async Task<Result<MessageResponseDto>> CreateWaterChange(WaterChangeCreateEditDto createDto)
+        public async Task<Result<MessageResponseDto>> CreateAsync(CreateWaterChangeDto createDto)
         {
             try
             {
@@ -49,7 +49,7 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
-        public async Task<Result<MessageResponseDto>> CreateWaterChangeForAquarium(Guid aquariumId, WaterChangeCreateEditForAquariumDto createDto)
+        public async Task<Result<MessageResponseDto>> CreateForAquariumAsync(Guid aquariumId, CreateWaterChangeForAquariumDto createDto)
         {
             try
             {
@@ -82,7 +82,7 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
-        public async Task<Result<PagedResult<WaterChangesGetResponseDto>>> GetAll(PaginationDto paginationDto, WaterChangeListFiltrationDto filterDto)
+        public async Task<Result<PagedResult<WaterChangeListItemDto>>> GetAllAsync(PaginationRequestDto paginationDto, WaterChangeFilterDto filterDto)
         {
             try
             {
@@ -98,7 +98,7 @@ namespace HomeServer.Application.Services.WaterChanges
                     .Include(item => item.Aquarium)
                     .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
                     .Take(paginationDto.PageSize)
-                    .Select(item => new WaterChangesGetResponseDto
+                    .Select(item => new WaterChangeListItemDto
                     {
                         Id = item.Id,
                         Amount = item.Amount,
@@ -108,7 +108,7 @@ namespace HomeServer.Application.Services.WaterChanges
                     })
                     .ToListAsync();
 
-                return Result<PagedResult<WaterChangesGetResponseDto>>.Success(new()
+                return Result<PagedResult<WaterChangeListItemDto>>.Success(new()
                 {
                     Data = waterChanges,
                     Pagination = new()
@@ -128,13 +128,13 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
-        public async Task<Result<WaterChangeForEditResponseDto>> GetForEdit(Guid waterChangeId)
+        public async Task<Result<WaterChangeEditDto>> GetForEditAsync(Guid waterChangeId)
         {
             try
             {
                 var result = await _context.WaterChanges
                     .Where(item => item.Id == waterChangeId)
-                    .Select(item => new WaterChangeForEditResponseDto
+                    .Select(item => new WaterChangeEditDto
                     {
                         Id = item.Id,
                         Amount = item.Amount,
@@ -157,13 +157,13 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
-        public async Task<Result<WaterChangeForAquariumEditResponseDto>> GetForAquariumEdit(Guid waterChangeId)
+        public async Task<Result<WaterChangeEditForAquariumDto>> GetForAquariumEditAsync(Guid waterChangeId)
         {
             try
             {
                 var result = await _context.WaterChanges
                     .Where(item => item.Id == waterChangeId)
-                    .Select(item => new WaterChangeForAquariumEditResponseDto
+                    .Select(item => new WaterChangeEditForAquariumDto
                     {
                         Id = item.Id,
                         Amount = item.Amount,
@@ -185,7 +185,7 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
-        public async Task<Result<MessageResponseDto>> UpdateWaterChange(Guid waterChangeId, WaterChangeCreateEditDto editDto)
+        public async Task<Result<MessageResponseDto>> UpdateAsync(Guid waterChangeId, UpdateWaterChangeDto updateDto)
         {
             try
             {
@@ -196,17 +196,17 @@ namespace HomeServer.Application.Services.WaterChanges
                     return Result.Failure("Nie znaleziono podmiany wody z podanym identyfikatorem!", ProblemType.NotFound);
                 }
 
-                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == editDto.AquariumId);
+                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == updateDto.AquariumId);
 
                 if (aquarium is null)
                 {
                     return Result.Failure("Nie znaleziono akwarium z podanym identyfikatorem!", ProblemType.NotFound);
                 }
 
-                waterChange.AquariumId = editDto.AquariumId;
+                waterChange.AquariumId = updateDto.AquariumId;
                 waterChange.Aquarium = aquarium;
-                waterChange.Amount = editDto.Amount;
-                waterChange.ChangeDate = editDto.ChangeDate;
+                waterChange.Amount = updateDto.Amount;
+                waterChange.ChangeDate = updateDto.ChangeDate;
 
                 await _context.SaveChangesAsync();
 
@@ -222,7 +222,7 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
-        public async Task<Result<MessageResponseDto>> UpdateWaterChangeOfAquarium(Guid waterChangeId, WaterChangeCreateEditForAquariumDto editDto)
+        public async Task<Result<MessageResponseDto>> UpdateForAquariumAsync(Guid waterChangeId, UpdateWaterChangeForAquariumDto updateDto)
         {
             try
             {
@@ -233,8 +233,8 @@ namespace HomeServer.Application.Services.WaterChanges
                     return Result.Failure("Nie znaleziono podmiany wody z podanym identyfikatorem!", ProblemType.NotFound);
                 }
 
-                waterChange.Amount = editDto.Amount;
-                waterChange.ChangeDate = editDto.ChangeDate;
+                waterChange.Amount = updateDto.Amount;
+                waterChange.ChangeDate = updateDto.ChangeDate;
 
                 await _context.SaveChangesAsync();
 
@@ -250,7 +250,7 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
-        public async Task<Result<MessageResponseDto>> Delete(Guid waterChangeId)
+        public async Task<Result<MessageResponseDto>> DeleteAsync(Guid waterChangeId)
         {
             try
             {
@@ -277,7 +277,7 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
-        private static IQueryable<WaterChange> ApplySortingForWaterChange(IQueryable<WaterChange> query, PaginationDto paginationDto)
+        private static IQueryable<WaterChange> ApplySortingForWaterChange(IQueryable<WaterChange> query, PaginationRequestDto paginationDto)
         {
             return paginationDto.SortBy?.ToLower() switch
             {
@@ -296,7 +296,7 @@ namespace HomeServer.Application.Services.WaterChanges
             };
         }
 
-        private static IQueryable<WaterChange> ApplyFiltrationForWaterChange(IQueryable<WaterChange> query, WaterChangeListFiltrationDto filterDto)
+        private static IQueryable<WaterChange> ApplyFiltrationForWaterChange(IQueryable<WaterChange> query, WaterChangeFilterDto filterDto)
         {
             if (filterDto.AquariumId.HasValue)
             {

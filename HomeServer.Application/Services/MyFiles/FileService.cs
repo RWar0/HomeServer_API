@@ -7,6 +7,7 @@ using HomeServer.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HomeServer.Infrastructure.Storage;
+using HomeServer.Application.Common.Enums;
 
 namespace HomeServer.Application.Services.MyFiles
 {
@@ -19,7 +20,7 @@ namespace HomeServer.Application.Services.MyFiles
             _fileStorageService = fileStorageService;
         }
 
-        public async Task<Result<FileInfoDto>> GetImage(Guid photoId)
+        public async Task<Result<FileInfoDto>> GetImageAsync(Guid photoId)
         {
             try
             {

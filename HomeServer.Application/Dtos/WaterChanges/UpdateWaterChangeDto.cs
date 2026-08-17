@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HomeServer.Application.Dtos.WaterChanges
 {
-    public class WaterChangeCreateEditForAquariumDto
+    public class UpdateWaterChangeDto
     {
         [Required(AllowEmptyStrings = false, ErrorMessage = "Ilość podmienionej wody jest wymagana!")]
         [Range(1, 10000, ErrorMessage = "Ilość podmienionej wody musi być dodatnia i nie większa niż 10000l!")]
@@ -12,5 +12,8 @@ namespace HomeServer.Application.Dtos.WaterChanges
         [Required(AllowEmptyStrings = false, ErrorMessage = "Data podmiany jest wymagana!")]
         [NotFutureDate(Name = "Data podmiany")]
         public DateOnly ChangeDate { get; set; }
+
+        [Required(AllowEmptyStrings = false, ErrorMessage = "Akwarium jest wymagane!")]
+        public Guid AquariumId { get; set; }
     }
 }

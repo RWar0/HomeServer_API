@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using HomeServer.Application.Base;
+using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Auth;
 using HomeServer.Application.Dtos.Common;
@@ -24,7 +25,7 @@ namespace HomeServer.Application.Services.Auth
             _jwtService = jwtService;
         }
 
-        public async Task<Result<LoginResponseWithRefreshDto>> Login(LoginUserDto loginUserDto)
+        public async Task<Result<LoginWithRefreshResponseDto>> LoginAsync(LoginRequestDto loginUserDto)
         {
 
             // Get and Validate user
@@ -60,7 +61,7 @@ namespace HomeServer.Application.Services.Auth
             await _context.SaveChangesAsync();
 
             // Return results
-            return Result<LoginResponseWithRefreshDto>.Success(new LoginResponseWithRefreshDto()
+            return Result<LoginWithRefreshResponseDto>.Success(new LoginWithRefreshResponseDto()
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
@@ -68,7 +69,7 @@ namespace HomeServer.Application.Services.Auth
             });
         }
 
-        public async Task<Result<RefreshSessionResponseDto>> Refresh(string oldRefreshToken)
+        public async Task<Result<RefreshSessionResponseDto>> RefreshAsync(string oldRefreshToken)
         {
             // Get user from refresh token
             Guid userId;
@@ -151,7 +152,7 @@ namespace HomeServer.Application.Services.Auth
             }
         }
 
-        public async Task<Result<MessageResponseDto>> Logout(string refreshToken, Guid userId)
+        public async Task<Result<MessageResponseDto>> LogoutAsync(string refreshToken, Guid userId)
         {
             var hashedRefreshToken = HashRefreshToken(refreshToken);
 

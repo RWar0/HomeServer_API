@@ -1,4 +1,6 @@
-﻿namespace HomeServer.Application.Common.Results
+﻿using HomeServer.Application.Common.Enums;
+
+namespace HomeServer.Application.Common.Results
 {
     public static class ProblemTypeExtensions
     {

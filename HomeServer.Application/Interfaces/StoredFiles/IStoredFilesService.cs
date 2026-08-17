@@ -6,6 +6,6 @@ namespace HomeServer.Application.Interfaces.StoredFiles
 {
     public interface IStoredFilesService
     {
-        public Task<Result<StoredFile>> Create(FileStorageResult fileStorageResult, Guid? userId);
+        public Task<Result<StoredFile>> CreateAsync(FileStorageResult fileStorageResult, Guid? userId);
     }
 }

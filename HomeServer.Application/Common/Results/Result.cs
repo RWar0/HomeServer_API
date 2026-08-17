@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using HomeServer.Application.Common.Enums;
+using System.Diagnostics.CodeAnalysis;
 
 namespace HomeServer.Application.Common.Results
 {

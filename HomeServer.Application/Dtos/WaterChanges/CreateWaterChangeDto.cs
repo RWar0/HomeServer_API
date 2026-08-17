@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HomeServer.Application.Dtos.WaterChanges
 {
-    public class WaterChangeCreateEditDto
+    public class CreateWaterChangeDto
     {
         [Required(AllowEmptyStrings = false, ErrorMessage = "Ilość podmienionej wody jest wymagana!")]
         [Range(1, 10000, ErrorMessage = "Ilość podmienionej wody musi być dodatnia i nie większa niż 10000l!")]

@@ -1,10 +1,10 @@
 ﻿using HomeServer.Application.Base;
 using HomeServer.Application.Common.Enums;
-using HomeServer.Application.Common.Pagination;
 using HomeServer.Application.Common.Results;
-using HomeServer.Application.Common.Select;
 using HomeServer.Application.Dtos.Aquariums;
 using HomeServer.Application.Dtos.Common;
+using HomeServer.Application.Dtos.Pagination;
+using HomeServer.Application.Dtos.Select;
 using HomeServer.Application.Dtos.WaterChanges;
 using HomeServer.Application.Interfaces.Aquariums;
 using HomeServer.Domain.Models;
@@ -24,7 +24,7 @@ namespace HomeServer.Application.Services.Aquariums
             _fileStorageService = fileStorageService;
         }
 
-        public async Task<Result<MessageResponseDto>> Create(AquariumCreateDto createDto)
+        public async Task<Result<MessageResponseDto>> CreateAsync(CreateAquariumDto createDto)
         {
             try
             {
@@ -49,12 +49,12 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<AquariumGetResponseDto[]>> GetAll()
+        public async Task<Result<AquariumResponseDto[]>> GetAllAsync()
         {
             try
             {
                 var items = await _context.Aquariums
-                    .Select(item => new AquariumGetResponseDto()
+                    .Select(item => new AquariumResponseDto()
                     {
                         Id = item.Id,
                         Name = item.Name,
@@ -80,12 +80,12 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<SelectResponseDto[]>> GetForSelect()
+        public async Task<Result<SelectOptionDto[]>> GetForSelectAsync()
         {
             try
             {
                 var items = await _context.Aquariums
-                    .Select(item => new SelectResponseDto()
+                    .Select(item => new SelectOptionDto()
                     {
                         Id = item.Id,
                         Name = item.Name,
@@ -101,7 +101,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<AquariumDetailsDto>> GetDetails(Guid aquariumId)
+        public async Task<Result<AquariumDetailsDto>> GetDetailsAsync(Guid aquariumId)
         {
             try
             {
@@ -139,7 +139,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<PagedResult<AquariumPhotosResponseDto>>> GetPhotos(Guid aquariumId, PaginationDto paginationDto)
+        public async Task<Result<PagedResult<AquariumPhotosResponseDto>>> GetPhotosAsync(Guid aquariumId, PaginationRequestDto paginationDto)
         {
             try
             {
@@ -186,7 +186,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<PagedResult<WaterChangesOfAquariumGetResponseDto>>> GetWaterChanges(Guid aquariumId, PaginationDto paginationDto)
+        public async Task<Result<PagedResult<WaterChangeForAquariumListItemDto>>> GetWaterChangesAsync(Guid aquariumId, PaginationRequestDto paginationDto)
         {
             try
             {
@@ -206,7 +206,7 @@ namespace HomeServer.Application.Services.Aquariums
                 var waterChanges = await baseQuery
                     .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
                     .Take(paginationDto.PageSize)
-                    .Select(item => new WaterChangesOfAquariumGetResponseDto()
+                    .Select(item => new WaterChangeForAquariumListItemDto()
                     {
                         Id = item.Id,
                         Amount = item.Amount,
@@ -214,7 +214,7 @@ namespace HomeServer.Application.Services.Aquariums
                     })
                     .ToListAsync();
 
-                return Result<PagedResult<WaterChangesOfAquariumGetResponseDto>>.Success(new()
+                return Result<PagedResult<WaterChangeForAquariumListItemDto>>.Success(new()
                 {
                     Data = waterChanges,
                     Pagination = new()
@@ -234,13 +234,13 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<AquariumBaseDataDto>> GetForEdit(Guid aquariumId)
+        public async Task<Result<AquariumSummaryDto>> GetForEditAsync(Guid aquariumId)
         {
             try
             {
                 var aquarium = await _context.Aquariums
                     .Where(item => item.Id == aquariumId)
-                    .Select(item => new AquariumBaseDataDto()
+                    .Select(item => new AquariumSummaryDto()
                     {
                         Id = item.Id,
                         Name = item.Name,
@@ -303,7 +303,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<MessageResponseDto>> UploadPhoto(Guid aquariumId, ImageDto fileDto, Guid userId)
+        public async Task<Result<MessageResponseDto>> UploadPhotoAsync(Guid aquariumId, ImageDto fileDto, Guid userId)
         {
             // Pobierz akwarium wraz ze zdjęciami
             var aquariumResult = await GetAquariumWithAllDataAndPhotos(aquariumId);
@@ -351,7 +351,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<MessageResponseDto>> Update(Guid aquariumId, AquariumCreateDto editDto)
+        public async Task<Result<MessageResponseDto>> UpdateAsync(Guid aquariumId, UpdateAquariumDto updateDto)
         {
             try
             {
@@ -364,9 +364,9 @@ namespace HomeServer.Application.Services.Aquariums
 
                 var aquarium = aquariumResult.Value;
 
-                aquarium.Name = editDto.Name;
-                aquarium.Volume = editDto.Volume;
-                aquarium.CreationDate = editDto.CreationDate;
+                aquarium.Name = updateDto.Name;
+                aquarium.Volume = updateDto.Volume;
+                aquarium.CreationDate = updateDto.CreationDate;
 
                 await _context.SaveChangesAsync();
 
@@ -382,7 +382,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<MessageResponseDto>> Delete(Guid aquariumId)
+        public async Task<Result<MessageResponseDto>> DeleteAsync(Guid aquariumId)
         {
             try
             {
@@ -411,7 +411,7 @@ namespace HomeServer.Application.Services.Aquariums
             }
         }
 
-        public async Task<Result<MessageResponseDto>> DeletePhoto(Guid aquariumId, Guid photoId)
+        public async Task<Result<MessageResponseDto>> DeletePhotoAsync(Guid aquariumId, Guid photoId)
         {
             try
             {
@@ -444,7 +444,7 @@ namespace HomeServer.Application.Services.Aquariums
         }
 
         // Helpers
-        private static IQueryable<WaterChange> ApplySortingForWaterChange(IQueryable<WaterChange> query, PaginationDto paginationDto)
+        private static IQueryable<WaterChange> ApplySortingForWaterChange(IQueryable<WaterChange> query, PaginationRequestDto paginationDto)
         {
             return paginationDto.SortBy?.ToLower() switch
             {

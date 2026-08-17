@@ -116,7 +116,7 @@ namespace HomeServer.API
 
             builder.Services.AddScoped<IAquariumsService, AquariumsService>();
             builder.Services.AddScoped<IWaterChangesService, WaterChangesService>();
-            builder.Services.AddScoped<IParametersCheckService, ParameterChecksService>();
+            builder.Services.AddScoped<IParameterChecksService, ParameterChecksService>();
             #endregion
 
             builder.Services.AddCors(options =>

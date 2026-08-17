@@ -5,6 +5,6 @@ namespace HomeServer.Application.Interfaces.Users
 {
     public interface IUsersService
     {
-        public Task<Result<UserMyProfileDto>> GetUserMyProfile(Guid userId);
+        public Task<Result<MyProfileResponseDto>> GetMyProfileAsync(Guid userId);
     }
 }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HomeServer.Application.Dtos.ParameterChecks
 {
-    public class ParameterCheckCreateEditDto
+    public class CreateParameterCheckDto
     {
         public double? Ph { get; set; }
         public double? Kh { get; set; }

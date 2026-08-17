@@ -1,6 +1,6 @@
 ﻿namespace HomeServer.Application.Dtos.ParameterChecks
 {
-    public class ParameterChecksGetResponseDto
+    public class ParameterCheckResponseDto
     {
         public Guid Id { get; set; }
         public double? Ph { get; set; }

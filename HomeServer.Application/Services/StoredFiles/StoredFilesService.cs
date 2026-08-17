@@ -12,7 +12,7 @@ namespace HomeServer.Application.Services.StoredFiles
     {
         public StoredFilesService(MyDbContext context, ILogger<StoredFilesService> logger) : base(context, logger) { }
 
-        public async Task<Result<StoredFile>> Create(FileStorageResult fileStorageResult, Guid? userId)
+        public async Task<Result<StoredFile>> CreateAsync(FileStorageResult fileStorageResult, Guid? userId)
         {
             var result = await _context.AddAsync(new StoredFile()
             {

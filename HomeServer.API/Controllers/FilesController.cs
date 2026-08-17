@@ -19,7 +19,7 @@ namespace HomeServer.API.Controllers
         [HttpGet("image/{photoId}")]
         public async Task<IActionResult> GetImage([FromRoute] Guid photoId)
         {
-            var result = await _fileService.GetImage(photoId);
+            var result = await _fileService.GetImageAsync(photoId);
 
             if (result.IsFailure)
             {

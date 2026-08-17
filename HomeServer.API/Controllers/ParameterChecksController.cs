@@ -1,5 +1,5 @@
 ﻿using HomeServer.API.Common.Extensions;
-using HomeServer.Application.Common.Pagination;
+using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.ParameterChecks;
 using HomeServer.Application.Interfaces.ParameterChecks;
 using Microsoft.AspNetCore.Authorization;
@@ -13,24 +13,24 @@ namespace HomeServer.API.Controllers
     [Authorize]
     public class ParameterChecksController : ControllerBase
     {
-        private readonly IParametersCheckService _parametersCheckService;
-        public ParameterChecksController(IParametersCheckService parametersCheckService)
+        private readonly IParameterChecksService _parametersCheckService;
+        public ParameterChecksController(IParameterChecksService parametersCheckService)
         {
             _parametersCheckService = parametersCheckService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateParameterChecks(ParameterCheckCreateEditDto createDto)
+        public async Task<IActionResult> CreateParameterChecks(CreateParameterCheckDto createDto)
         {
-            var parameterChecks = await _parametersCheckService.Create(createDto);
+            var parameterChecks = await _parametersCheckService.CreateAsync(createDto);
 
             return parameterChecks.ToActionResult(this);
         }
 
         [HttpGet("list")]
-        public async Task<IActionResult> GetParameterChecksList([FromQuery] PaginationDto paginationDto, [FromQuery] ParameterChecksListFiltrationDto filtrationDto)
+        public async Task<IActionResult> GetParameterChecksList([FromQuery] PaginationRequestDto paginationDto, [FromQuery] ParameterCheckFilterDto filtrationDto)
         {
-            var parameterChecks = await _parametersCheckService.GetAll(paginationDto, filtrationDto);
+            var parameterChecks = await _parametersCheckService.GetAllAsync(paginationDto, filtrationDto);
 
             return parameterChecks.ToActionResult(this);
         }
@@ -38,15 +38,15 @@ namespace HomeServer.API.Controllers
         [HttpGet("{parameterCheckId}/for-edit")]
         public async Task<IActionResult> GetParameterChecksForEdit([FromRoute] Guid parameterCheckId)
         {
-            var parameterChecks = await _parametersCheckService.GetForEdit(parameterCheckId);
+            var parameterChecks = await _parametersCheckService.GetForEditAsync(parameterCheckId);
 
             return parameterChecks.ToActionResult(this);
         }
 
         [HttpPut("{parameterCheckId}")]
-        public async Task<IActionResult> UpdateParameterChecks([FromRoute] Guid parameterCheckId, ParameterCheckCreateEditDto editDto)
+        public async Task<IActionResult> UpdateParameterChecks([FromRoute] Guid parameterCheckId, UpdateParameterCheckDto updateDto)
         {
-            var parameterChecks = await _parametersCheckService.Update(parameterCheckId, editDto);
+            var parameterChecks = await _parametersCheckService.UpdateAsync(parameterCheckId, updateDto);
 
             return parameterChecks.ToActionResult(this);
         }
@@ -54,7 +54,7 @@ namespace HomeServer.API.Controllers
         [HttpDelete("{parameterCheckId}")]
         public async Task<IActionResult> DeleteParameterChecks([FromRoute] Guid parameterCheckId)
         {
-            var parameterChecks = await _parametersCheckService.Delete(parameterCheckId);
+            var parameterChecks = await _parametersCheckService.DeleteAsync(parameterCheckId);
 
             return parameterChecks.ToActionResult(this);
         }

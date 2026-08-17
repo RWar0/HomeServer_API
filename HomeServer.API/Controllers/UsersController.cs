@@ -22,9 +22,9 @@ namespace HomeServer.API.Controllers
         }
 
         [HttpGet("my-profile")]
-        public async Task<ActionResult<UserMyProfileDto>> GetMyProfile()
+        public async Task<ActionResult<MyProfileResponseDto>> GetMyProfile()
         {
-            var result = await _usersService.GetUserMyProfile(_currentUserService.UserId);
+            var result = await _usersService.GetMyProfileAsync(_currentUserService.UserId);
 
             return result.ToActionResult(this);
         }

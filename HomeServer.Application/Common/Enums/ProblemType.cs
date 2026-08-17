@@ -1,4 +1,4 @@
-﻿namespace HomeServer.Application.Common.Results
+﻿namespace HomeServer.Application.Common.Enums
 {
     public enum ProblemType
     {

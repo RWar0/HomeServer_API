@@ -1,8 +1,8 @@
 ﻿using HomeServer.Application.Common.Enums;
 
-namespace HomeServer.Application.Common.Pagination
+namespace HomeServer.Application.Dtos.Pagination
 {
-    public record PaginationResponse
+    public record PaginationResponseDto
     {
         public int Page { get; set; }
         public int PageSize { get; set; }

@@ -1,6 +1,6 @@
 ﻿namespace HomeServer.Application.Dtos.WaterChanges
 {
-    public class WaterChangeListFiltrationDto
+    public class WaterChangeFilterDto
     {
         public Guid? AquariumId { get; set; }
         public DateOnly? FromDate { get; set; }

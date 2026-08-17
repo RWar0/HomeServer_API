@@ -1,8 +1,8 @@
 ﻿using HomeServer.Application.Base;
 using HomeServer.Application.Common.Enums;
-using HomeServer.Application.Common.Pagination;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Common;
+using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.ParameterChecks;
 using HomeServer.Application.Interfaces.ParameterChecks;
 using HomeServer.Domain.Models;
@@ -12,17 +12,17 @@ using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.ParameterChecks
 {
-    public class ParameterChecksService : BaseService, IParametersCheckService
+    public class ParameterChecksService : BaseService, IParameterChecksService
     {
         public ParameterChecksService(MyDbContext context, ILogger<ParameterChecksService> logger) : base(context, logger)
         {
         }
 
-        public async Task<Result<MessageResponseDto>> Create(ParameterCheckCreateEditDto createDto)
+        public async Task<Result<MessageResponseDto>> CreateAsync(CreateParameterCheckDto createDto)
         {
             try
             {
-                if(!CheckIfAnyParameterExistForCreateEdit(createDto))
+                if(!CheckIfAnyParameterExistForCreateUpdate(createDto))
                 {
                     return Result.Failure("Należy podać co najmniej jeden parametr (wartości: Ph, Kh, Gh, NO2, NO3, Temperatura)", ProblemType.BadRequest);
                 }
@@ -61,7 +61,7 @@ namespace HomeServer.Application.Services.ParameterChecks
             }
         }
 
-        public async Task<Result<PagedResult<ParameterChecksGetResponseDto>>> GetAll(PaginationDto paginationDto, ParameterChecksListFiltrationDto filtrationDto)
+        public async Task<Result<PagedResult<ParameterCheckResponseDto>>> GetAllAsync(PaginationRequestDto paginationDto, ParameterCheckFilterDto filtrationDto)
         {
             try
             {
@@ -77,7 +77,7 @@ namespace HomeServer.Application.Services.ParameterChecks
                     .Include(item => item.Aquarium)
                     .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
                     .Take(paginationDto.PageSize)
-                    .Select(item => new ParameterChecksGetResponseDto
+                    .Select(item => new ParameterCheckResponseDto
                     {
                         Id = item.Id,
                         MeasuredAt = item.MeasuredAt,
@@ -92,7 +92,7 @@ namespace HomeServer.Application.Services.ParameterChecks
                     })
                     .ToListAsync();
 
-                return Result<PagedResult<ParameterChecksGetResponseDto>>.Success(new()
+                return Result<PagedResult<ParameterCheckResponseDto>>.Success(new()
                 {
                     Data = parameterChecks,
                     Pagination = new()
@@ -112,7 +112,7 @@ namespace HomeServer.Application.Services.ParameterChecks
             }
         }
 
-        public async Task<Result<ParameterCheckEditResponseDto>> GetForEdit(Guid parameterCheckId)
+        public async Task<Result<ParameterCheckEditResponseDto>> GetForEditAsync(Guid parameterCheckId)
         {
             try {
                 var result = await _context.ParameterChecks.Where(item => item.Id == parameterCheckId)
@@ -144,11 +144,11 @@ namespace HomeServer.Application.Services.ParameterChecks
             }
         }
 
-        public async Task<Result<MessageResponseDto>> Update(Guid parameterCheckId, ParameterCheckCreateEditDto editDto)
+        public async Task<Result<MessageResponseDto>> UpdateAsync(Guid parameterCheckId, UpdateParameterCheckDto updateDto)
         {
             try
             {
-                if (!CheckIfAnyParameterExistForCreateEdit(editDto))
+                if (!CheckIfAnyParameterExistForCreateUpdate(updateDto))
                 {
                     return Result.Failure("Należy podać co najmniej jeden parametr (wartości: Ph, Kh, Gh, NO2, NO3, Temperatura)", ProblemType.BadRequest);
                 }
@@ -160,22 +160,22 @@ namespace HomeServer.Application.Services.ParameterChecks
                     return Result.Failure("Nie znaleziono podmiany wody z podanym identyfikatorem!", ProblemType.NotFound);
                 }
 
-                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == editDto.AquariumId);
+                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == updateDto.AquariumId);
 
                 if (aquarium is null)
                 {
                     return Result.Failure("Nie znaleziono akwarium z podanym identyfikatorem!", ProblemType.NotFound);
                 }
 
-                parameterCheck.AquariumId = editDto.AquariumId;
+                parameterCheck.AquariumId = updateDto.AquariumId;
                 parameterCheck.Aquarium = aquarium;
-                parameterCheck.MeasuredAt = editDto.MeasuredAt;
-                parameterCheck.Temperature = editDto.Temperature;
-                parameterCheck.Ph = editDto.Ph;
-                parameterCheck.Kh = editDto.Kh;
-                parameterCheck.Gh = editDto.Gh;
-                parameterCheck.No2 = editDto.No2;
-                parameterCheck.No3 = editDto.No3;
+                parameterCheck.MeasuredAt = updateDto.MeasuredAt;
+                parameterCheck.Temperature = updateDto.Temperature;
+                parameterCheck.Ph = updateDto.Ph;
+                parameterCheck.Kh = updateDto.Kh;
+                parameterCheck.Gh = updateDto.Gh;
+                parameterCheck.No2 = updateDto.No2;
+                parameterCheck.No3 = updateDto.No3;
 
                 await _context.SaveChangesAsync();
 
@@ -191,7 +191,7 @@ namespace HomeServer.Application.Services.ParameterChecks
             }
         }
 
-        public async Task<Result<MessageResponseDto>> Delete(Guid parameterCheckId)
+        public async Task<Result<MessageResponseDto>> DeleteAsync(Guid parameterCheckId)
         {
             try
             {
@@ -218,7 +218,7 @@ namespace HomeServer.Application.Services.ParameterChecks
             }
         }
 
-        private static IQueryable<ParameterCheck> ApplySortingForParameterChecks(IQueryable<ParameterCheck> query, PaginationDto paginationDto)
+        private static IQueryable<ParameterCheck> ApplySortingForParameterChecks(IQueryable<ParameterCheck> query, PaginationRequestDto paginationDto)
         {
             return paginationDto.SortBy?.ToLower() switch
             {
@@ -234,7 +234,7 @@ namespace HomeServer.Application.Services.ParameterChecks
             };
         }
 
-        private static IQueryable<ParameterCheck> ApplyFiltrationForParameterChecks(IQueryable<ParameterCheck> query, ParameterChecksListFiltrationDto filterDto)
+        private static IQueryable<ParameterCheck> ApplyFiltrationForParameterChecks(IQueryable<ParameterCheck> query, ParameterCheckFilterDto filterDto)
         {
             if (filterDto.AquariumId.HasValue)
             {
@@ -254,7 +254,12 @@ namespace HomeServer.Application.Services.ParameterChecks
             return query;
         }
 
-        private static bool CheckIfAnyParameterExistForCreateEdit(ParameterCheckCreateEditDto dto)
+        private static bool CheckIfAnyParameterExistForCreateUpdate(CreateParameterCheckDto dto)
+        {
+            return dto.Temperature.HasValue || dto.Ph.HasValue || dto.Kh.HasValue || dto.Gh.HasValue || dto.No2.HasValue || dto.No3.HasValue;
+        }
+
+        private static bool CheckIfAnyParameterExistForCreateUpdate(UpdateParameterCheckDto dto)
         {
             return dto.Temperature.HasValue || dto.Ph.HasValue || dto.Kh.HasValue || dto.Gh.HasValue || dto.No2.HasValue || dto.No3.HasValue;
         }

@@ -1,6 +1,6 @@
 ﻿namespace HomeServer.Application.Dtos.WaterChanges
 {
-    public class WaterChangesOfAquariumGetResponseDto
+    public class WaterChangeForAquariumListItemDto
     {
         public Guid Id { get; set; }
         public decimal Amount { get; set; }

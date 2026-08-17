@@ -1,6 +1,6 @@
 # HomeServer API
 
-HomeServer API is an ASP.NET Core backend for a self-hosted home server application. It handles user authentication, JWT access tokens, refresh-token sessions, user profile data, and SQL Server persistence through Entity Framework Core.
+HomeServer API is an ASP.NET Core backend for a self-hosted home server application. It handles user authentication, JWT access tokens, refresh-token sessions, user profile data, aquarium management, water change tracking, water parameter checks, file uploads, and PostgreSQL persistence through Entity Framework Core.
 
 The project is structured as a small clean-architecture style solution, with API, application logic, domain models, and infrastructure kept in separate projects.
 
@@ -8,7 +8,7 @@ The project is structured as a small clean-architecture style solution, with API
 
 - ASP.NET Core 8 Web API
 - Entity Framework Core
-- SQL Server / LocalDB
+- PostgreSQL
 - JWT Bearer authentication
 - BCrypt password hashing
 - Swagger / OpenAPI
@@ -25,14 +25,28 @@ HomeServer.Infrastructure  EF Core DbContext, migrations, file storage, entity c
 
 ## Features
 
-- Aquariums:
-	- Create,
-	- Get all,
-	- Get Photo of aquarium,
-	- Photo Upload,
-	- Update,
-	- Delete
-- 
+- User authentication with JWT access tokens and refresh-token based sessions
+- Secure session cookies for login, refresh, and logout flows
+- Role-based authorization for protected administrator and moderator actions
+- User profile endpoint for the currently authenticated user
+- Aquarium management:
+  - create, update, delete, list, details, and edit-data endpoints
+  - select-list endpoint for UI dropdowns
+  - photo upload, paginated photo listing, and photo deletion
+- File storage support for uploaded images
+- Protected image download endpoint
+- Water change tracking:
+  - create, update, delete, list, and edit-data endpoints
+  - aquarium-specific water change creation and editing
+  - paginated and filtered list endpoint
+- Water parameter check tracking:
+  - create, update, delete, list, and edit-data endpoints
+  - paginated and filtered list endpoint
+- Request DTO validation, including image extension, content type, and file size validation
+- Global exception handling with standardized ProblemDetails responses
+- Typed result handling for application service responses
+- Entity Framework Core migrations and PostgreSQL persistence
+- CLI command flow for creating users from the terminal
 
 ## Requirements
 
@@ -41,11 +55,11 @@ HomeServer.Infrastructure  EF Core DbContext, migrations, file storage, entity c
 
 ## Configuration
 
-The default connection string is stored in `HomeServer.API/appsettings.json`:
+The default PostgreSQL connection string is stored in `HomeServer.API/appsettings.json`:
 
 ```json
 "ConnectionStrings": {
-  "DatabaseConnection": "Server=(localdb)\\MSSQLLocalDB;Database=HomeServer;Integrated security=true;TrustServerCertificate=True;"
+  "DatabaseConnection": "Host=localhost;Port=5432;Database=home_server_db;Username=postgres;Password=YOUR_PASSWORD"
 }
 ```
 

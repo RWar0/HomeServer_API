@@ -1,6 +1,6 @@
-﻿namespace HomeServer.Application.Common.Select
+﻿namespace HomeServer.Application.Dtos.Select
 {
-    public class SelectResponseDto
+    public class SelectOptionDto
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = default!;

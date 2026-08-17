@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HomeServer.Application.Dtos.Aquariums
 {
-    public class AquariumCreateDto
+    public class UpdateAquariumDto
     {
         [Required(AllowEmptyStrings = false, ErrorMessage = "Nazwa jest wymagana!")]
         public string Name { get; set; } = default!;

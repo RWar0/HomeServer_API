@@ -2,7 +2,7 @@
 
 namespace HomeServer.Application.Dtos.Auth
 {
-    public class LoginUserDto
+    public class LoginRequestDto
     {
         [Required(AllowEmptyStrings = false, ErrorMessage = "Nie podano login'u!")]
         public string Login { get; set; } = default!;

@@ -1,6 +1,6 @@
 ﻿namespace HomeServer.Application.Dtos.ParameterChecks
 {
-    public class ParameterChecksListFiltrationDto
+    public class ParameterCheckFilterDto
     {
         public Guid? AquariumId { get; set; }
         public DateOnly? FromDate { get; set; }
