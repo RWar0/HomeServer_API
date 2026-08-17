@@ -27,6 +27,8 @@ using HomeServer.Application.Services.MyFiles;
 using HomeServer.API.Commands;
 using HomeServer.Application.Interfaces.WaterChanges;
 using HomeServer.Application.Services.WaterChanges;
+using HomeServer.Application.Interfaces.ParameterChecks;
+using HomeServer.Application.Services.ParameterChecks;
 
 namespace HomeServer.API
 {
@@ -114,6 +116,7 @@ namespace HomeServer.API
 
             builder.Services.AddScoped<IAquariumsService, AquariumsService>();
             builder.Services.AddScoped<IWaterChangesService, WaterChangesService>();
+            builder.Services.AddScoped<IParametersCheckService, ParameterChecksService>();
             #endregion
 
             builder.Services.AddCors(options =>

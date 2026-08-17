@@ -3,7 +3,7 @@
     public class WaterChangeListFiltrationDto
     {
         public Guid? AquariumId { get; set; }
-        public DateOnly? fromDate { get; set; }
-        public DateOnly? toDate { get; set; }
+        public DateOnly? FromDate { get; set; }
+        public DateOnly? ToDate { get; set; }
     }
 }

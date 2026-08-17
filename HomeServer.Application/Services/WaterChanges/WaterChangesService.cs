@@ -303,14 +303,14 @@ namespace HomeServer.Application.Services.WaterChanges
                 query = query.Where(item => item.AquariumId == filterDto.AquariumId.Value);
             }
 
-            if (filterDto.fromDate.HasValue)
+            if (filterDto.FromDate.HasValue)
             {
-                query = query.Where(item => item.ChangeDate > filterDto.fromDate.Value);
+                query = query.Where(item => item.ChangeDate > filterDto.FromDate.Value);
             }
 
-            if (filterDto.toDate.HasValue)
+            if (filterDto.ToDate.HasValue)
             {
-                query = query.Where(item => item.ChangeDate <= filterDto.toDate.Value.AddDays(1));
+                query = query.Where(item => item.ChangeDate <= filterDto.ToDate.Value.AddDays(1));
             }
 
             return query;

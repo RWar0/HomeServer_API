@@ -52,6 +52,54 @@ namespace HomeServer.Infrastructure.Migrations
                     b.ToTable("Aquariums");
                 });
 
+            modelBuilder.Entity("HomeServer.Domain.Models.ParameterCheck", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AquariumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("Gh")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Kh")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateOnly>("MeasuredAt")
+                        .HasColumnType("date");
+
+                    b.Property<double?>("No2")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("No3")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Ph")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Temperature")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AquariumId");
+
+                    b.HasIndex("MeasuredAt");
+
+                    b.ToTable("ParameterChecks");
+                });
+
             modelBuilder.Entity("HomeServer.Domain.Models.StoredFile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -235,6 +283,17 @@ namespace HomeServer.Infrastructure.Migrations
                     b.ToTable("WaterChanges");
                 });
 
+            modelBuilder.Entity("HomeServer.Domain.Models.ParameterCheck", b =>
+                {
+                    b.HasOne("HomeServer.Domain.Models.Aquarium", "Aquarium")
+                        .WithMany("ParameterChecks")
+                        .HasForeignKey("AquariumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Aquarium");
+                });
+
             modelBuilder.Entity("HomeServer.Domain.Models.StoredFile", b =>
                 {
                     b.HasOne("HomeServer.Domain.Models.Aquarium", null)
@@ -267,6 +326,8 @@ namespace HomeServer.Infrastructure.Migrations
 
             modelBuilder.Entity("HomeServer.Domain.Models.Aquarium", b =>
                 {
+                    b.Navigation("ParameterChecks");
+
                     b.Navigation("Photos");
 
                     b.Navigation("WaterChanges");

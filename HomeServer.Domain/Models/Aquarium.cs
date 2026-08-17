@@ -10,5 +10,6 @@ namespace HomeServer.Domain.Models
 
         public ICollection<StoredFile> Photos { get; set; } = [];
         public ICollection<WaterChange> WaterChanges { get; set; } = [];
+        public ICollection<ParameterCheck> ParameterChecks { get; set; } = [];
     }
 }
