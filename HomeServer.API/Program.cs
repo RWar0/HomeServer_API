@@ -110,7 +110,7 @@ namespace HomeServer.API
             builder.Services.AddScoped<IAuthService, AuthService>();
 
             builder.Services.AddScoped<IFileService, FileService>();
-            
+
             builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
@@ -132,7 +132,38 @@ namespace HomeServer.API
                 });
             });
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    options.InvalidModelStateResponseFactory = context =>
+                    {
+                        var errors = context.ModelState
+                            .Where(x => x.Value?.Errors.Count > 0)
+                            .ToDictionary(
+                                x => x.Key,
+                                x => x.Value!.Errors.Select(error =>
+                                {
+                                    if (error.Exception is FormatException ||
+                                        error.Exception?.InnerException is FormatException)
+                                    {
+                                        return x.Key switch
+                                        {
+                                            "Page" => "Strona musi byæ liczb¹ ca³kowit¹.",
+                                            "PageSize" => "Rozmiar strony musi byæ liczb¹ ca³kowit¹.",
+                                            "SortDirection" => "Nieprawid³owy kierunek sortowania.",
+                                            _ => "Podano nieprawid³owy typ wartoœci."
+                                        };
+                                    }
+
+                                    return string.IsNullOrEmpty(error.ErrorMessage)
+                                        ? "Nieprawid³owa wartoœæ."
+                                        : error.ErrorMessage;
+                                }).ToArray()
+                            );
+
+                        return new BadRequestObjectResult(new { errors });
+                    };
+                });
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

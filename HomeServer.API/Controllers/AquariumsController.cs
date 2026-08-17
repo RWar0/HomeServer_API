@@ -26,7 +26,7 @@ namespace HomeServer.API.Controllers
         }
 
         [HttpPost("create")]
-        [Authorize(Roles = nameof(RolesEnum.Admin))]
+        [Authorize(Roles = $"{nameof(RolesEnum.Admin)},{nameof(RolesEnum.Moderator)}")]
         public async Task<ActionResult<MessageResponseDto>> CreateAquarium(CreateAquariumDto createDto)
         {
             var result = await _aquariumsService.CreateAsync(createDto);
@@ -90,6 +90,7 @@ namespace HomeServer.API.Controllers
         }
 
         [HttpPut("{aquariumId}")]
+        [Authorize(Roles = $"{nameof(RolesEnum.Admin)},{nameof(RolesEnum.Moderator)}")]
         public async Task<ActionResult<AquariumResponseDto[]>> Update([FromRoute] Guid aquariumId, UpdateAquariumDto updateDto)
         {
             var result = await _aquariumsService.UpdateAsync(aquariumId, updateDto);
