@@ -29,9 +29,10 @@ namespace HomeServer.Application.Services.WaterChanges
 
                 await _context.WaterChanges.AddAsync(new()
                 {
-                    Aquarium = aquarium,
                     Amount = createDto.Amount,
-                    ChangeDate = createDto.ChangeDate
+                    ChangeDate = createDto.ChangeDate,
+                    AquariumId = createDto.AquariumId,
+                    Aquarium = aquarium,
                 });
 
                 await _context.SaveChangesAsync();
@@ -61,9 +62,10 @@ namespace HomeServer.Application.Services.WaterChanges
 
                 await _context.WaterChanges.AddAsync(new()
                 {
-                    Aquarium = aquarium,
                     Amount = createDto.Amount,
-                    ChangeDate = createDto.ChangeDate
+                    ChangeDate = createDto.ChangeDate,
+                    AquariumId = aquariumId,
+                    Aquarium = aquarium,
                 });
 
                 await _context.SaveChangesAsync();
@@ -137,7 +139,7 @@ namespace HomeServer.Application.Services.WaterChanges
                         Id = item.Id,
                         Amount = item.Amount,
                         ChangeDate = item.ChangeDate,
-                        AquariumId = item.Aquarium.Id
+                        AquariumId = item.AquariumId
                     })
                     .FirstOrDefaultAsync();
 
@@ -201,6 +203,7 @@ namespace HomeServer.Application.Services.WaterChanges
                     return Result.Failure("Nie znaleziono akwarium z podanym identyfikatorem!", ProblemType.NotFound);
                 }
 
+                waterChange.AquariumId = editDto.AquariumId;
                 waterChange.Aquarium = aquarium;
                 waterChange.Amount = editDto.Amount;
                 waterChange.ChangeDate = editDto.ChangeDate;
@@ -297,7 +300,7 @@ namespace HomeServer.Application.Services.WaterChanges
         {
             if (filterDto.AquariumId.HasValue)
             {
-                query = query.Where(item => item.Aquarium.Id == filterDto.AquariumId.Value);
+                query = query.Where(item => item.AquariumId == filterDto.AquariumId.Value);
             }
 
             if (filterDto.fromDate.HasValue)

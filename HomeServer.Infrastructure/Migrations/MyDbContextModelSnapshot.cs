@@ -230,6 +230,8 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("AquariumId");
 
+                    b.HasIndex("ChangeDate");
+
                     b.ToTable("WaterChanges");
                 });
 
@@ -237,7 +239,8 @@ namespace HomeServer.Infrastructure.Migrations
                 {
                     b.HasOne("HomeServer.Domain.Models.Aquarium", null)
                         .WithMany("Photos")
-                        .HasForeignKey("AquariumId");
+                        .HasForeignKey("AquariumId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.UserRefreshToken", b =>

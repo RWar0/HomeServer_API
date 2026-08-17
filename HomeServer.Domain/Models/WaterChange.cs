@@ -7,6 +7,7 @@ namespace HomeServer.Domain.Models
         public decimal Amount { get; set; }
         public DateOnly ChangeDate { get; set; }
 
+        public Guid AquariumId { get; set; }
         public Aquarium Aquarium { get; set; } = default!;
     }
 }
