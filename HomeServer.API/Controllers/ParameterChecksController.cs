@@ -27,6 +27,14 @@ namespace HomeServer.API.Controllers
             return parameterChecks.ToActionResult(this);
         }
 
+        [HttpPost("for-aquarium/{aquariumId}")]
+        public async Task<IActionResult> CreateParameterChecks(Guid aquariumId, CreateParameterCheckForAquariumDto createDto)
+        {
+            var parameterChecks = await _parametersCheckService.CreateForAquariumAsync(aquariumId, createDto);
+
+            return parameterChecks.ToActionResult(this);
+        }
+
         [HttpGet("list")]
         public async Task<IActionResult> GetParameterChecksList([FromQuery] PaginationRequestDto paginationDto, [FromQuery] ParameterCheckFilterDto filtrationDto)
         {
@@ -47,6 +55,14 @@ namespace HomeServer.API.Controllers
         public async Task<IActionResult> UpdateParameterChecks([FromRoute] Guid parameterCheckId, UpdateParameterCheckDto updateDto)
         {
             var parameterChecks = await _parametersCheckService.UpdateAsync(parameterCheckId, updateDto);
+
+            return parameterChecks.ToActionResult(this);
+        }
+
+        [HttpPut("for-aquarium/{parameterCheckId}")]
+        public async Task<IActionResult> UpdateParameterChecksForAquarium([FromRoute] Guid parameterCheckId, UpdateParameterCheckForAquariumDto updateDto)
+        {
+            var parameterChecks = await _parametersCheckService.UpdateForAquariumAsync(parameterCheckId, updateDto);
 
             return parameterChecks.ToActionResult(this);
         }

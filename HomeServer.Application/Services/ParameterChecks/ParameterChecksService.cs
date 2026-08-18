@@ -61,6 +61,49 @@ namespace HomeServer.Application.Services.ParameterChecks
             }
         }
 
+        public async Task<Result<MessageResponseDto>> CreateForAquariumAsync(Guid aquariumId, CreateParameterCheckForAquariumDto createDto)
+        {
+            try
+            {
+                if(!CheckIfAnyParameterExistForCreateUpdate(createDto))
+                {
+                    return Result.Failure("Należy podać co najmniej jeden parametr (wartości: Ph, Kh, Gh, NO2, NO3, Temperatura)", ProblemType.BadRequest);
+                }
+
+                var aquarium = await _context.Aquariums.FirstOrDefaultAsync(item => item.Id == aquariumId);
+
+                if (aquarium is null)
+                {
+                    return Result.Failure("Nie znaleziono akwarium z podanym identyfikatorem!", ProblemType.NotFound);
+                }
+
+                await _context.ParameterChecks.AddAsync(new()
+                {
+                    AquariumId = aquariumId,
+                    Aquarium = aquarium,
+                    MeasuredAt = createDto.MeasuredAt,
+                    Temperature = createDto.Temperature,
+                    Ph = createDto.Ph,
+                    Kh = createDto.Kh,
+                    Gh = createDto.Gh,
+                    No2 = createDto.No2,
+                    No3 = createDto.No3,
+                });
+
+                await _context.SaveChangesAsync();
+
+                return Result.Success(new MessageResponseDto
+                {
+                    Message = "Pomiar parametrów został poprawnie utworzony dla akwarium!"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot create parameter check for aquarium with Id: {AquariumId}", aquariumId);
+                return Result.Failure("Nie można utworzyć pomiaru parametrów dla podanego akwarium!", ProblemType.InternalServerError);
+            }
+        }
+
         public async Task<Result<PagedResult<ParameterCheckResponseDto>>> GetAllAsync(PaginationRequestDto paginationDto, ParameterCheckFilterDto filtrationDto)
         {
             try
@@ -191,6 +234,44 @@ namespace HomeServer.Application.Services.ParameterChecks
             }
         }
 
+        public async Task<Result<MessageResponseDto>> UpdateForAquariumAsync(Guid parameterCheckId, UpdateParameterCheckForAquariumDto updateDto)
+        {
+            try
+            {
+                if (!CheckIfAnyParameterExistForCreateUpdate(updateDto))
+                {
+                    return Result.Failure("Należy podać co najmniej jeden parametr (wartości: Ph, Kh, Gh, NO2, NO3, Temperatura)", ProblemType.BadRequest);
+                }
+
+                var parameterCheck = await _context.ParameterChecks.FirstOrDefaultAsync(item => item.Id == parameterCheckId);
+
+                if (parameterCheck is null)
+                {
+                    return Result.Failure("Nie znaleziono podmiany wody z podanym identyfikatorem!", ProblemType.NotFound);
+                }
+
+                parameterCheck.MeasuredAt = updateDto.MeasuredAt;
+                parameterCheck.Temperature = updateDto.Temperature;
+                parameterCheck.Ph = updateDto.Ph;
+                parameterCheck.Kh = updateDto.Kh;
+                parameterCheck.Gh = updateDto.Gh;
+                parameterCheck.No2 = updateDto.No2;
+                parameterCheck.No3 = updateDto.No3;
+
+                await _context.SaveChangesAsync();
+
+                return Result.Success(new MessageResponseDto
+                {
+                    Message = "Podmiana wody została poprawnie edytowana dla podanego akwarium!"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot edit water change with Id: {WaterChangeId}", parameterCheckId);
+                return Result.Failure("Nie można edytować podanej podmiany wody dla wybranego akwarium!", ProblemType.InternalServerError);
+            }
+        }
+
         public async Task<Result<MessageResponseDto>> DeleteAsync(Guid parameterCheckId)
         {
             try
@@ -259,7 +340,17 @@ namespace HomeServer.Application.Services.ParameterChecks
             return dto.Temperature.HasValue || dto.Ph.HasValue || dto.Kh.HasValue || dto.Gh.HasValue || dto.No2.HasValue || dto.No3.HasValue;
         }
 
+        private static bool CheckIfAnyParameterExistForCreateUpdate(CreateParameterCheckForAquariumDto dto)
+        {
+            return dto.Temperature.HasValue || dto.Ph.HasValue || dto.Kh.HasValue || dto.Gh.HasValue || dto.No2.HasValue || dto.No3.HasValue;
+        }
+
         private static bool CheckIfAnyParameterExistForCreateUpdate(UpdateParameterCheckDto dto)
+        {
+            return dto.Temperature.HasValue || dto.Ph.HasValue || dto.Kh.HasValue || dto.Gh.HasValue || dto.No2.HasValue || dto.No3.HasValue;
+        }
+
+        private static bool CheckIfAnyParameterExistForCreateUpdate(UpdateParameterCheckForAquariumDto dto)
         {
             return dto.Temperature.HasValue || dto.Ph.HasValue || dto.Kh.HasValue || dto.Gh.HasValue || dto.No2.HasValue || dto.No3.HasValue;
         }

@@ -65,10 +65,19 @@ namespace HomeServer.API.Controllers
 
             return result.ToActionResult(this);
         }
+        
         [HttpGet("{aquariumId}/water-changes")]
         public async Task<ActionResult<AquariumResponseDto[]>> GetAquariumWaterChanges([FromRoute] Guid aquariumId, [FromQuery] PaginationRequestDto paginationDto)
         {
             var result = await _aquariumsService.GetWaterChangesAsync(aquariumId, paginationDto);
+
+            return result.ToActionResult(this);
+        }
+        
+        [HttpGet("{aquariumId}/parameter-checks")]
+        public async Task<ActionResult<AquariumResponseDto[]>> GetAquariumParameterChecks([FromRoute] Guid aquariumId, [FromQuery] PaginationRequestDto paginationDto)
+        {
+            var result = await _aquariumsService.GetParameterChecksAsync(aquariumId, paginationDto);
 
             return result.ToActionResult(this);
         }

@@ -4,6 +4,7 @@ using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Aquariums;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.Pagination;
+using HomeServer.Application.Dtos.ParameterChecks;
 using HomeServer.Application.Dtos.Select;
 using HomeServer.Application.Dtos.WaterChanges;
 using HomeServer.Application.Interfaces.Aquariums;
@@ -197,7 +198,7 @@ namespace HomeServer.Application.Services.Aquariums
                     return Result.Failure("Akwarium o podanym identyfikatorze nie istnieje!", ProblemType.NotFound);
                 }
 
-                var baseQuery = _context.WaterChanges.AsNoTracking().Where(item => item.Aquarium.Id == aquariumId);
+                var baseQuery = _context.WaterChanges.AsNoTracking().Where(item => item.AquariumId == aquariumId);
 
                 var totalCount = await baseQuery.CountAsync();
 
@@ -231,6 +232,59 @@ namespace HomeServer.Application.Services.Aquariums
             {
                 _logger.LogError(ex, "Cannot get list of aquarium with Id: {AquariumId} water changes", aquariumId);
                 return Result.Failure("Nie można pobrać listy podmian wody podanego akwarium z bazy danych!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<PagedResult<ParameterCheckForAquariumListItemDto>>> GetParameterChecksAsync(Guid aquariumId, PaginationRequestDto paginationDto)
+        {
+            try
+            {
+                var isAquariumExists = await _context.Aquariums.AnyAsync(item => item.Id == aquariumId);
+
+                if (!isAquariumExists)
+                {
+                    return Result.Failure("Akwarium o podanym identyfikatorze nie istnieje!", ProblemType.NotFound);
+                }
+
+                var baseQuery = _context.ParameterChecks.AsNoTracking().Where(item => item.AquariumId == aquariumId);
+
+                var totalCount = await baseQuery.CountAsync();
+
+                baseQuery = ApplySortingForParameterChecks(baseQuery, paginationDto);
+
+                var parameterChecks = await baseQuery
+                    .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
+                    .Take(paginationDto.PageSize)
+                    .Select(item => new ParameterCheckForAquariumListItemDto()
+                    {
+                        Id = item.Id,
+                        MeasuredAt = item.MeasuredAt,
+                        Kh = item.Kh,
+                        Gh = item.Gh,
+                        No2 = item.No2,
+                        No3 = item.No3,
+                        Ph = item.Ph,
+                        Temperature = item.Temperature,
+                    })
+                    .ToListAsync();
+
+                return Result<PagedResult<ParameterCheckForAquariumListItemDto>>.Success(new()
+                {
+                    Data = parameterChecks,
+                    Pagination = new()
+                    {
+                        Page = paginationDto.Page,
+                        PageSize = paginationDto.PageSize,
+                        TotalCount = totalCount,
+                        SortBy = paginationDto.SortBy,
+                        SortDirection = paginationDto.SortDirection,
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get list of aquarium with Id: {AquariumId} parameter checks", aquariumId);
+                return Result.Failure("Nie można pobrać listy pomiarów parametrów podanego akwarium z bazy danych!", ProblemType.InternalServerError);
             }
         }
 
@@ -457,6 +511,18 @@ namespace HomeServer.Application.Services.Aquariums
                     : query.OrderBy(x => x.ChangeDate),
 
                 _ => query.OrderByDescending(x => x.ChangeDate)
+            };
+        }
+
+        private static IQueryable<ParameterCheck> ApplySortingForParameterChecks(IQueryable<ParameterCheck> query, PaginationRequestDto paginationDto)
+        {
+            return paginationDto.SortBy?.ToLower() switch
+            {
+                "measuredat" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.MeasuredAt)
+                    : query.OrderBy(x => x.MeasuredAt),
+
+                _ => query.OrderByDescending(x => x.MeasuredAt)
             };
         }
     }
