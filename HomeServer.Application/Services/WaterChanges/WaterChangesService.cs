@@ -124,7 +124,7 @@ namespace HomeServer.Application.Services.WaterChanges
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Cannot get list of all water changes");
-                return Result.Failure("Można pobrać podmian wody z bazy danych!", ProblemType.InternalServerError);
+                return Result.Failure("Nie można pobrać podmian wody z bazy danych!", ProblemType.InternalServerError);
             }
         }
 
@@ -273,7 +273,7 @@ namespace HomeServer.Application.Services.WaterChanges
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Cannot delete water change with Id: {WaterChangeId}", waterChangeId);
-                return Result.Failure("Można usunąć podmiany wody z podanym identyfikatorem!", ProblemType.InternalServerError);
+                return Result.Failure("Nie można usunąć podmiany wody z podanym identyfikatorem!", ProblemType.InternalServerError);
             }
         }
 

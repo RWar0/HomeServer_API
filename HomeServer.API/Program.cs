@@ -1,34 +1,35 @@
 
+using HomeServer.API.Commands;
 using HomeServer.API.Configuration.RateLimiting;
 using HomeServer.API.Middleware.ExceptionHandling;
+using HomeServer.Application.Configuration.Jwt;
 using HomeServer.Application.Interfaces.Aquariums;
 using HomeServer.Application.Interfaces.Auth;
+using HomeServer.Application.Interfaces.MyFiles;
+using HomeServer.Application.Interfaces.ParameterChecks;
 using HomeServer.Application.Interfaces.StoredFiles;
 using HomeServer.Application.Interfaces.Users;
 using HomeServer.Application.Interfaces.UserSession;
+using HomeServer.Application.Interfaces.WaterChanges;
 using HomeServer.Application.Services.Aquariums;
 using HomeServer.Application.Services.Auth;
+using HomeServer.Application.Services.MyFiles;
+using HomeServer.Application.Services.ParameterChecks;
 using HomeServer.Application.Services.StoredFiles;
 using HomeServer.Application.Services.Users;
 using HomeServer.Application.Services.UserSession;
-using HomeServer.Application.Configuration.Jwt;
+using HomeServer.Application.Services.WaterChanges;
 using HomeServer.Infrastructure.Data;
 using HomeServer.Infrastructure.Security;
 using HomeServer.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
-using HomeServer.Application.Interfaces.MyFiles;
-using HomeServer.Application.Services.MyFiles;
-using HomeServer.API.Commands;
-using HomeServer.Application.Interfaces.WaterChanges;
-using HomeServer.Application.Services.WaterChanges;
-using HomeServer.Application.Interfaces.ParameterChecks;
-using HomeServer.Application.Services.ParameterChecks;
+using System.Text;
+using System.Text.Json.Serialization;
 
 namespace HomeServer.API
 {
@@ -133,6 +134,10 @@ namespace HomeServer.API
             });
 
             builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                })
                 .ConfigureApiBehaviorOptions(options =>
                 {
                     options.InvalidModelStateResponseFactory = context =>
