@@ -120,18 +120,28 @@ namespace HomeServer.API
             builder.Services.AddScoped<IParameterChecksService, ParameterChecksService>();
             #endregion
 
+            #region CORS Policies - Dev and Prod
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AngularPolicy", policy =>
+                options.AddPolicy("DevelopmentPolicy", policy =>
                 {
-                    // Localhost policy
                     policy
-                        .WithOrigins("http://192.168.0.111:4200", "http://localhost:4200")
+                        .WithOrigins("http://localhost:4200", "http://192.168.0.111:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+
+                options.AddPolicy("ProductionPolicy", policy =>
+                {
+                    policy
+                        .WithOrigins("https://homeserver.home", "https://192.168.0.10:3000")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
                 });
             });
+            #endregion
 
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
@@ -177,6 +187,14 @@ namespace HomeServer.API
             builder.Services.AddProblemDetails();
 
             var app = builder.Build();
+
+            // Automatically Updates Database based on migration list
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+                db.Database.Migrate();
+            }
+
             if (args.Length > 0)
             {
                 return await CommandRunner.RunAsync(args, app.Services);
@@ -188,7 +206,7 @@ namespace HomeServer.API
                 app.UseSwaggerUI();
             }
 
-            app.UseCors("AngularPolicy");
+            app.UseCors(app.Environment.IsDevelopment() ? "DevelopmentPolicy" : "ProductionPolicy");
 
             app.UseHttpsRedirection();
 
