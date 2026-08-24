@@ -3,6 +3,7 @@ services:
     image: ${DOCKER_REGISTRY-}homeserverapi
     environment:
         ConnectionStrings__DatabaseConnection: Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DATABASE};Username=${POSTGRES_USERNAME};Password=${POSTGRES_PASSWORD}
+        AllowedOrigins: ${CORS_ORIGIN}
         Jwt__Access__Key: ${JWT_ACCESS_KEY}
         Jwt__Refresh__Key: ${JWT_REFRESH_KEY}
     build:

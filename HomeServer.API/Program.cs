@@ -132,10 +132,11 @@ namespace HomeServer.API
                         .AllowCredentials();
                 });
 
+                var allowedOrigins = builder.Configuration["AllowedOrigins"] ?? "https://192.168.0.10:3000";
                 options.AddPolicy("ProductionPolicy", policy =>
                 {
                     policy
-                        .WithOrigins("https://homeserver.home", "https://192.168.0.10:3000")
+                        .WithOrigins(allowedOrigins)
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
