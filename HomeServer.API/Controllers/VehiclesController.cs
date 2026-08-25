@@ -43,6 +43,14 @@ namespace HomeServer.API.Controllers
             return result.ToActionResult(this);
         }
 
+        [HttpGet("for-select")]
+        public async Task<IActionResult> GetForSelect()
+        {
+            var result = await _vehiclesService.GetForSelectAsync();
+
+            return result.ToActionResult(this);
+        }
+
         [HttpPut("{vehicleId}")]
         public async Task<IActionResult> UpdateVehicle([FromRoute] Guid vehicleId, UpdateVehicleDto updateDto)
         {

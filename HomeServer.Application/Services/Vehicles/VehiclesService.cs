@@ -3,6 +3,7 @@ using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.Pagination;
+using HomeServer.Application.Dtos.Select;
 using HomeServer.Application.Dtos.Vehicles;
 using HomeServer.Application.Interfaces.Vehicles;
 using HomeServer.Domain.Models;
@@ -53,7 +54,7 @@ namespace HomeServer.Application.Services.Vehicles
 
                 baseQuery = ApplySortingForVehicle(baseQuery, paginationDto);
 
-                var waterChanges = await baseQuery
+                var vehicles = await baseQuery
                     .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
                     .Take(paginationDto.PageSize)
                     .Select(item => new VehicleListItemDto
@@ -68,7 +69,7 @@ namespace HomeServer.Application.Services.Vehicles
 
                 return Result<PagedResult<VehicleListItemDto>>.Success(new()
                 {
-                    Data = waterChanges,
+                    Data = vehicles,
                     Pagination = new()
                     {
                         Page = paginationDto.Page,
@@ -113,6 +114,28 @@ namespace HomeServer.Application.Services.Vehicles
             {
                 _logger.LogError(ex, "Cannot get vehicle for edit with Id: {VehicleId}", vehicleId);
                 return Result.Failure("Nie można pobrać pojazdu z podanym identyfikatorem!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<SelectOptionDto[]>> GetForSelectAsync()
+        {
+            try
+            {
+                var vehicles = await _context.Vehicles
+                    .AsNoTracking()
+                    .Select(item => new SelectOptionDto
+                    {
+                        Id= item.Id,
+                        Name = $"{item.Brand} {item.Model}"
+                    })
+                    .ToListAsync();
+
+                return Result.Success(vehicles.ToArray());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get list for select of all vehicles");
+                return Result.Failure("Nie można pobrać listy pojazdów do wyboru z bazy danych!", ProblemType.InternalServerError);
             }
         }
 

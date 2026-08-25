@@ -9,5 +9,7 @@ namespace HomeServer.Domain.Models
         public string Model { get; set; } = default!;
         public int Production { get; set; }
         public VehiclesEnum Type { get; set; }
+
+        public ICollection<VehicleFueling> Fuelings { get; set; } = [];
     }
 }

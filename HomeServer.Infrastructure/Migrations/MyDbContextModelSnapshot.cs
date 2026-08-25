@@ -284,6 +284,42 @@ namespace HomeServer.Infrastructure.Migrations
                     b.ToTable("Vehicles");
                 });
 
+            modelBuilder.Entity("HomeServer.Domain.Models.VehicleFueling", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("Cost")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("Quantity")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("VehicleId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Date");
+
+                    b.HasIndex("VehicleId");
+
+                    b.ToTable("VehicleFuelings");
+                });
+
             modelBuilder.Entity("HomeServer.Domain.Models.WaterChange", b =>
                 {
                     b.Property<Guid>("Id")
@@ -347,6 +383,17 @@ namespace HomeServer.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("HomeServer.Domain.Models.VehicleFueling", b =>
+                {
+                    b.HasOne("HomeServer.Domain.Models.Vehicle", "Vehicle")
+                        .WithMany("Fuelings")
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Vehicle");
+                });
+
             modelBuilder.Entity("HomeServer.Domain.Models.WaterChange", b =>
                 {
                     b.HasOne("HomeServer.Domain.Models.Aquarium", "Aquarium")
@@ -370,6 +417,11 @@ namespace HomeServer.Infrastructure.Migrations
             modelBuilder.Entity("HomeServer.Domain.Models.User", b =>
                 {
                     b.Navigation("RefreshTokens");
+                });
+
+            modelBuilder.Entity("HomeServer.Domain.Models.Vehicle", b =>
+                {
+                    b.Navigation("Fuelings");
                 });
 #pragma warning restore 612, 618
         }
