@@ -10,6 +10,7 @@ using HomeServer.Application.Interfaces.ParameterChecks;
 using HomeServer.Application.Interfaces.StoredFiles;
 using HomeServer.Application.Interfaces.Users;
 using HomeServer.Application.Interfaces.UserSession;
+using HomeServer.Application.Interfaces.Vehicles;
 using HomeServer.Application.Interfaces.WaterChanges;
 using HomeServer.Application.Services.Aquariums;
 using HomeServer.Application.Services.Auth;
@@ -18,6 +19,7 @@ using HomeServer.Application.Services.ParameterChecks;
 using HomeServer.Application.Services.StoredFiles;
 using HomeServer.Application.Services.Users;
 using HomeServer.Application.Services.UserSession;
+using HomeServer.Application.Services.Vehicles;
 using HomeServer.Application.Services.WaterChanges;
 using HomeServer.Infrastructure.Data;
 using HomeServer.Infrastructure.Security;
@@ -118,6 +120,7 @@ namespace HomeServer.API
             builder.Services.AddScoped<IAquariumsService, AquariumsService>();
             builder.Services.AddScoped<IWaterChangesService, WaterChangesService>();
             builder.Services.AddScoped<IParameterChecksService, ParameterChecksService>();
+            builder.Services.AddScoped<IVehiclesService, VehiclesService>();
             #endregion
 
             #region CORS Policies - Dev and Prod
@@ -189,9 +192,10 @@ namespace HomeServer.API
 
             var app = builder.Build();
 
-            // Automatically Updates Database based on migration list
-            using (var scope = app.Services.CreateScope())
+            // Automatically Updates Database based on migration list if RUN_MIGRATIONS is true.
+            if (app.Configuration.GetValue<bool>("RUN_MIGRATIONS"))
             {
+                using var scope = app.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
                 db.Database.Migrate();
             }

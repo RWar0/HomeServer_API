@@ -20,13 +20,15 @@ namespace HomeServer.API.Controllers
         private readonly IAuthService _authService;
         private readonly ICurrentUserService _currentUserService;
         private readonly JwtOptions _jwtOptions;
+        private readonly IWebHostEnvironment _env;
 
-        public AuthController(IAuthService authService, ICurrentUserService currentUserService, IOptions<JwtOptions> jwtOptions)
+        public AuthController(IAuthService authService, ICurrentUserService currentUserService, IOptions<JwtOptions> jwtOptions, IWebHostEnvironment env)
         {
             _authService = authService;
             _currentUserService = currentUserService;
 
             _jwtOptions = jwtOptions.Value;
+            _env = env;
         }
 
         [EnableRateLimiting(RateLimitingConstants.Login)]
@@ -107,7 +109,7 @@ namespace HomeServer.API.Controllers
             return new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
+                Secure = _env.IsProduction(),
                 SameSite = SameSiteMode.Lax,
                 Expires = forDelete ? null : DateTimeOffset.UtcNow.AddMinutes(_jwtOptions.Refresh.DurationInMinutes),
                 MaxAge = forDelete ? null : TimeSpan.FromMinutes(_jwtOptions.Refresh.DurationInMinutes),

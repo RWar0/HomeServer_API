@@ -18,6 +18,7 @@ namespace HomeServer.Infrastructure.Data
         public required DbSet<Aquarium> Aquariums { get; set; }
         public required DbSet<WaterChange> WaterChanges { get; set; }
         public required DbSet<ParameterCheck> ParameterChecks { get; set; }
+        public required DbSet<Vehicle> Vehicles { get; set; }
         #endregion
 
 

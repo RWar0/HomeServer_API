@@ -4,6 +4,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - RUN_MIGRATIONS=${RUN_MIGRATIONS} 
       - ConnectionStrings__DatabaseConnection=Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DATABASE};Username=${POSTGRES_USERNAME};Password=${POSTGRES_PASSWORD}
       - AllowedOrigins=${CORS_ORIGIN}
       - Jwt__Access__Key=${JWT_ACCESS_KEY}
