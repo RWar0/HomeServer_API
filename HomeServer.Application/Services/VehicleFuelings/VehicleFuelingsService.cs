@@ -51,6 +51,40 @@ namespace HomeServer.Application.Services.VehicleFuelings
             }
         }
 
+        public async Task<Result<MessageResponseDto>> CreateForVehicleAsync(Guid vehicleId, CreateVehicleFuelingForVehicleDto createDto)
+        {
+            try
+            {
+                var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.Id == vehicleId);
+
+                if (vehicle is null)
+                {
+                    return Result.Failure("Nie znaleziono pojazdu z podanym identyfikatorem!", ProblemType.NotFound);
+                }
+
+                await _context.VehicleFuelings.AddAsync(new()
+                {
+                    Cost = createDto.Cost,
+                    Date = createDto.Date,
+                    Quantity = createDto.Quantity,
+                    VehicleId = vehicleId,
+                    Vehicle = vehicle,
+                });
+
+                await _context.SaveChangesAsync();
+
+                return Result.Success(new MessageResponseDto
+                {
+                    Message = "Tankowanie zostało poprawnie utworzone!"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot create vehicle fueling!");
+                return Result.Failure("Nie można utworzyć tankowania pojazdu!!", ProblemType.InternalServerError);
+            }
+        }
+
         public async Task<Result<PagedResult<VehicleFuelingListItem>>> GetAllAsync(PaginationRequestDto paginationDto, VehicleFuelingFilterDto filterDto)
         {
             try
@@ -129,6 +163,35 @@ namespace HomeServer.Application.Services.VehicleFuelings
             }
         }
 
+        public async Task<Result<VehicleFuelingWithoutVehicleEditDto>> GetForEditWithoutVehicleAsync(Guid vehicleFuelingId)
+        {
+            try
+            {
+                var vehicleFueling = await _context.VehicleFuelings
+                    .Where(item => item.Id == vehicleFuelingId)
+                    .Select(item => new VehicleFuelingWithoutVehicleEditDto
+                    {
+                        Id = item.Id,
+                        Cost = item.Cost,
+                        Date = item.Date,
+                        Quantity = item.Quantity,
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (vehicleFueling is null)
+                {
+                    return Result.Failure("Nie znaleziono tankowania pojazdu z podanym identyfikatorem!", ProblemType.NotFound);
+                }
+
+                return Result.Success(vehicleFueling);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get vehicle fueling for edit with Id: {VehicleFuelingId}", vehicleFuelingId);
+                return Result.Failure("Nie można pobrać tankowania pojazdu z podanym identyfikatorem!", ProblemType.InternalServerError);
+            }
+        }
+
         public async Task<Result<MessageResponseDto>> UpdateAsync(Guid vehicleFuelingId, UpdateVehicleFuelingDto updateDto)
         {
             try
@@ -152,6 +215,35 @@ namespace HomeServer.Application.Services.VehicleFuelings
                 vehicleFueling.Quantity = updateDto.Quantity;
                 vehicleFueling.VehicleId = updateDto.VehicleId;
                 vehicleFueling.Vehicle = vehicle;
+
+                await _context.SaveChangesAsync();
+
+                return Result.Success(new MessageResponseDto
+                {
+                    Message = "Tankowanie zostało zaktualizowane!"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot update vehicle fueling with Id: {VehicleFuelingId}", vehicleFuelingId);
+                return Result.Failure("Nie można zaktualizować tankowania pojazdu!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<MessageResponseDto>> UpdateForVehicleAsync(Guid vehicleFuelingId, UpdateVehicleFuelingForVehicleDto updateDto)
+        {
+            try
+            {
+                var vehicleFueling = await _context.VehicleFuelings.FirstOrDefaultAsync(item => item.Id == vehicleFuelingId);
+
+                if (vehicleFueling is null)
+                {
+                    return Result.Failure("Nie znaleziono tankowania z podanym identyfikatorem!", ProblemType.NotFound);
+                }
+
+                vehicleFueling.Cost = updateDto.Cost;
+                vehicleFueling.Date = updateDto.Date;
+                vehicleFueling.Quantity = updateDto.Quantity;
 
                 await _context.SaveChangesAsync();
 

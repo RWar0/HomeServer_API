@@ -4,6 +4,7 @@ using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.Select;
+using HomeServer.Application.Dtos.VehicleFuelings;
 using HomeServer.Application.Dtos.Vehicles;
 using HomeServer.Application.Interfaces.Vehicles;
 using HomeServer.Domain.Models;
@@ -87,6 +88,35 @@ namespace HomeServer.Application.Services.Vehicles
             }
         }
 
+        public async Task<Result<VehicleBaseDto>> GetBaseDataAsync(Guid vehicleId)
+        {
+            try
+            {
+                var vehicle = await _context.Vehicles
+                    .Where(item => item.Id == vehicleId)
+                    .Select(item => new VehicleBaseDto
+                    {
+                        Id = item.Id,
+                        Brand = item.Brand,
+                        Model = item.Model,
+                        Production = item.Production,
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (vehicle is null)
+                {
+                    return Result.Failure("Nie znaleziono pojazdu z podanym identyfikatorem!", ProblemType.NotFound);
+                }
+
+                return Result.Success(vehicle);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get vehicle base data with Id: {VehicleId}", vehicleId);
+                return Result.Failure("Nie można pobrać pojazdu z podanym identyfikatorem!", ProblemType.InternalServerError);
+            }
+        }
+
         public async Task<Result<VehicleEditDto>> GetForEditAsync(Guid vehicleId)
         {
             try
@@ -125,7 +155,7 @@ namespace HomeServer.Application.Services.Vehicles
                     .AsNoTracking()
                     .Select(item => new SelectOptionDto
                     {
-                        Id= item.Id,
+                        Id = item.Id,
                         Name = $"{item.Brand} {item.Model}"
                     })
                     .ToListAsync();
@@ -136,6 +166,52 @@ namespace HomeServer.Application.Services.Vehicles
             {
                 _logger.LogError(ex, "Cannot get list for select of all vehicles");
                 return Result.Failure("Nie można pobrać listy pojazdów do wyboru z bazy danych!", ProblemType.InternalServerError);
+            }
+        }
+
+        public async Task<Result<PagedResult<VehicleFuelingsForVehicleListItemDto>>> GetFuelingsAsync(Guid vehicleId, PaginationRequestDto paginationDto, DateFilterDto filterDto)
+        {
+            try
+            {
+                var baseQuery = _context.VehicleFuelings
+                    .AsNoTracking()
+                    .Where(item => item.VehicleId == vehicleId);
+
+                baseQuery = ApplyFiltrationForVehicleFueling(baseQuery, filterDto);
+
+                var totalCount = await baseQuery.CountAsync();
+
+                baseQuery = ApplySortingForVehicleFuelings(baseQuery, paginationDto);
+
+                var fuelings = await baseQuery
+                    .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
+                    .Take(paginationDto.PageSize)
+                    .Select(fueling => new VehicleFuelingsForVehicleListItemDto
+                    {
+                        Id = fueling.Id,
+                        Cost = fueling.Cost,
+                        Date = fueling.Date,
+                        Quantity = fueling.Quantity,
+                    })
+                    .ToListAsync();
+                
+                return Result<PagedResult<VehicleFuelingsForVehicleListItemDto>>.Success(new()
+                {
+                    Data = fuelings,
+                    Pagination = new()
+                    {
+                        Page = paginationDto.Page,
+                        PageSize = paginationDto.PageSize,
+                        TotalCount = totalCount,
+                        SortBy = paginationDto.SortBy,
+                        SortDirection = paginationDto.SortDirection,
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get fuelings for vehicle with Id: {VehicleId}", vehicleId);
+                return Result.Failure("Nie można pobrać tankowań pojazdu!", ProblemType.InternalServerError);
             }
         }
 
@@ -219,6 +295,41 @@ namespace HomeServer.Application.Services.Vehicles
 
                 _ => query.OrderBy(x => x.Brand)
             };
+        }
+
+        private static IQueryable<VehicleFueling> ApplySortingForVehicleFuelings(IQueryable<VehicleFueling> query, PaginationRequestDto paginationDto)
+        {
+            return paginationDto.SortBy?.ToLower() switch
+            {
+                "date" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Date)
+                    : query.OrderBy(x => x.Date),
+
+                "cost" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Cost)
+                    : query.OrderBy(x => x.Cost),
+
+                "quantity" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Quantity)
+                    : query.OrderBy(x => x.Quantity),
+
+                _ => query.OrderByDescending(x => x.Date),
+            };
+        }
+
+        private static IQueryable<VehicleFueling> ApplyFiltrationForVehicleFueling(IQueryable<VehicleFueling> query, DateFilterDto filterDto)
+        {
+            if (filterDto.FromDate.HasValue)
+            {
+                query = query.Where(item => item.Date > filterDto.FromDate.Value);
+            }
+
+            if (filterDto.ToDate.HasValue)
+            {
+                query = query.Where(item => item.Date <= filterDto.ToDate.Value.AddDays(1));
+            }
+
+            return query;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using HomeServer.API.Common.Extensions;
+using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.Vehicles;
 using HomeServer.Application.Interfaces.Vehicles;
@@ -35,10 +36,26 @@ namespace HomeServer.API.Controllers
             return result.ToActionResult(this);
         }
 
+        [HttpGet("{vehicleId}/base-data")]
+        public async Task<IActionResult> GetBaseData([FromRoute] Guid vehicleId)
+        {
+            var result = await _vehiclesService.GetBaseDataAsync(vehicleId);
+
+            return result.ToActionResult(this);
+        }
+
         [HttpGet("{vehicleId}/for-edit")]
         public async Task<IActionResult> GetById([FromRoute] Guid vehicleId)
         {
             var result = await _vehiclesService.GetForEditAsync(vehicleId);
+
+            return result.ToActionResult(this);
+        }
+
+        [HttpGet("{vehicleId}/fuelings")]
+        public async Task<IActionResult> GetFuelingsOfVehicle([FromRoute] Guid vehicleId, [FromQuery] PaginationRequestDto paginationDto, [FromQuery] DateFilterDto filterDto)
+        {
+            var result = await _vehiclesService.GetFuelingsAsync(vehicleId, paginationDto, filterDto);
 
             return result.ToActionResult(this);
         }
