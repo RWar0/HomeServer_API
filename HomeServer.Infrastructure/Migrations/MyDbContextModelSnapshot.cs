@@ -17,7 +17,7 @@ namespace HomeServer.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.15")
+                .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -49,7 +49,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Aquariums");
+                    b.ToTable("Aquariums", (string)null);
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.ParameterCheck", b =>
@@ -97,7 +97,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("MeasuredAt");
 
-                    b.ToTable("ParameterChecks");
+                    b.ToTable("ParameterChecks", (string)null);
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.StoredFile", b =>
@@ -149,7 +149,7 @@ namespace HomeServer.Infrastructure.Migrations
                     b.HasIndex("RelativePath")
                         .IsUnique();
 
-                    b.ToTable("StoredFiles");
+                    b.ToTable("StoredFiles", (string)null);
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.User", b =>
@@ -194,7 +194,7 @@ namespace HomeServer.Infrastructure.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.UserRefreshToken", b =>
@@ -247,7 +247,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserRefreshTokens");
+                    b.ToTable("UserRefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.Vehicle", b =>
@@ -281,7 +281,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Vehicles");
+                    b.ToTable("Vehicles", (string)null);
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.VehicleFueling", b =>
@@ -317,7 +317,85 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("VehicleId");
 
-                    b.ToTable("VehicleFuelings");
+                    b.ToTable("VehicleFuelings", (string)null);
+                });
+
+            modelBuilder.Entity("HomeServer.Domain.Models.VehicleService", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("Cost")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("VehicleId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Date");
+
+                    b.HasIndex("VehicleId");
+
+                    b.HasIndex("VehicleId", "Date");
+
+                    b.ToTable("VehicleServices", (string)null);
+                });
+
+            modelBuilder.Entity("HomeServer.Domain.Models.VehicleServiceItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("Cost")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("VehicleServiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Title");
+
+                    b.HasIndex("VehicleServiceId");
+
+                    b.HasIndex("VehicleServiceId", "Title");
+
+                    b.ToTable("VehicleServiceItem", (string)null);
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.WaterChange", b =>
@@ -350,7 +428,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("ChangeDate");
 
-                    b.ToTable("WaterChanges");
+                    b.ToTable("WaterChanges", (string)null);
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.ParameterCheck", b =>
@@ -394,6 +472,28 @@ namespace HomeServer.Infrastructure.Migrations
                     b.Navigation("Vehicle");
                 });
 
+            modelBuilder.Entity("HomeServer.Domain.Models.VehicleService", b =>
+                {
+                    b.HasOne("HomeServer.Domain.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("HomeServer.Domain.Models.VehicleServiceItem", b =>
+                {
+                    b.HasOne("HomeServer.Domain.Models.VehicleService", "VehicleService")
+                        .WithMany("Items")
+                        .HasForeignKey("VehicleServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("VehicleService");
+                });
+
             modelBuilder.Entity("HomeServer.Domain.Models.WaterChange", b =>
                 {
                     b.HasOne("HomeServer.Domain.Models.Aquarium", "Aquarium")
@@ -422,6 +522,11 @@ namespace HomeServer.Infrastructure.Migrations
             modelBuilder.Entity("HomeServer.Domain.Models.Vehicle", b =>
                 {
                     b.Navigation("Fuelings");
+                });
+
+            modelBuilder.Entity("HomeServer.Domain.Models.VehicleService", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

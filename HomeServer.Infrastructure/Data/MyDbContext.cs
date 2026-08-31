@@ -20,6 +20,7 @@ namespace HomeServer.Infrastructure.Data
         public required DbSet<ParameterCheck> ParameterChecks { get; set; }
         public required DbSet<Vehicle> Vehicles { get; set; }
         public required DbSet<VehicleFueling> VehicleFuelings { get; set; }
+        public required DbSet<VehicleService> VehicleServices { get; set; }
         #endregion
 
 
@@ -34,7 +35,8 @@ namespace HomeServer.Infrastructure.Data
             {
                 if (typeof(BaseModel).IsAssignableFrom(entityType.ClrType))
                 {
-                    modelBuilder.Entity(entityType.ClrType).HasQueryFilter(BuildNotDeletedQueryFilter(entityType.ClrType));
+                    modelBuilder.Entity(entityType.ClrType)
+                        .HasQueryFilter(BuildNotDeletedQueryFilter(entityType.ClrType));
                 }
             }
         }

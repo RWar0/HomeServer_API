@@ -12,6 +12,7 @@ using HomeServer.Application.Interfaces.Users;
 using HomeServer.Application.Interfaces.UserSession;
 using HomeServer.Application.Interfaces.VehicleFuelings;
 using HomeServer.Application.Interfaces.Vehicles;
+using HomeServer.Application.Interfaces.VehicleServices;
 using HomeServer.Application.Interfaces.WaterChanges;
 using HomeServer.Application.Services.Aquariums;
 using HomeServer.Application.Services.Auth;
@@ -22,6 +23,7 @@ using HomeServer.Application.Services.Users;
 using HomeServer.Application.Services.UserSession;
 using HomeServer.Application.Services.VehicleFuelings;
 using HomeServer.Application.Services.Vehicles;
+using HomeServer.Application.Services.VehicleServices;
 using HomeServer.Application.Services.WaterChanges;
 using HomeServer.Infrastructure.Data;
 using HomeServer.Infrastructure.Security;
@@ -125,6 +127,7 @@ namespace HomeServer.API
 
             builder.Services.AddScoped<IVehiclesService, VehiclesService>();
             builder.Services.AddScoped<IVehicleFuelingsService, VehicleFuelingsService>();
+            builder.Services.AddScoped<IVehicleServicesService, VehicleServicesService>();
             #endregion
 
             #region CORS Policies - Dev and Prod

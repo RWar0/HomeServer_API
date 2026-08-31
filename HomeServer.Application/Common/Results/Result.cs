@@ -3,8 +3,50 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace HomeServer.Application.Common.Results
 {
-    public static class Result
+    public class Result
     {
+        private readonly string? _error;
+        private readonly string? _errorTitle;
+        private readonly int? _errorCode;
+
+        public bool IsSuccess { get; }
+
+        public bool IsFailure => !IsSuccess;
+
+        public string Error =>
+            IsFailure
+                ? _error!
+                : throw new InvalidOperationException("Result is successful.");
+
+        public int ErrorCode =>
+            IsFailure
+                ? (_errorCode ?? 400)
+                : throw new InvalidOperationException("Result is successful.");
+
+        public string ErrorTitle =>
+            IsFailure
+                ? (_errorTitle ?? "BadRequest")
+                : throw new InvalidOperationException("Result is successful.");
+
+        protected Result()
+        {
+            IsSuccess = true;
+        }
+
+        protected Result(
+            string error,
+            int errorCode = 400,
+            string errorTitle = "BadRequest")
+        {
+            IsSuccess = false;
+            _error = error;
+            _errorCode = errorCode;
+            _errorTitle = errorTitle;
+        }
+
+        public static Result Success()
+            => new();
+
         public static Result<T> Success<T>(T value) where T : class
             => Result<T>.Success(value);
 
@@ -26,6 +68,13 @@ namespace HomeServer.Application.Common.Results
                 problem.GetStatusCode(),
                 problem.GetTitle()
             );
+
+        public static implicit operator Result(FailureResult failure)
+            => new(
+                failure.Error,
+                failure.ErrorCode,
+                failure.ErrorTitle
+            );
     }
 
     public readonly record struct FailureResult(
@@ -34,56 +83,26 @@ namespace HomeServer.Application.Common.Results
         string ErrorTitle = "BadRequest"
     );
 
-    public class Result<T> where T : class
+    public class Result<T> : Result where T : class
     {
         private readonly T? _value;
-        private readonly string? _error;
-        private readonly string? _errorTitle;
-        private readonly int? _errorCode;
-
-        public bool IsSuccess { get; }
-
-        public bool IsFailure => !IsSuccess;
 
         public T Value =>
             IsSuccess
                 ? _value!
                 : throw new InvalidOperationException("Result is an error.");
 
-        public string Error =>
-            IsFailure
-                ? _error!
-                : throw new InvalidOperationException("Result is successful.");
-
-        public int ErrorCode =>
-            IsFailure
-                ? (_errorCode ?? 400)
-                : throw new InvalidOperationException("Result is successful.");
-
-        public string ErrorTitle =>
-            IsFailure
-                ? (_errorTitle ?? "BadRequest")
-                : throw new InvalidOperationException("Result is successful.");
-
         private Result(T value)
         {
-            IsSuccess = true;
             _value = value;
-            _error = null;
-            _errorCode = null;
-            _errorTitle = null;
         }
 
         private Result(
             string error,
             int errorCode = 400,
             string errorTitle = "BadRequest")
+            : base(error, errorCode, errorTitle)
         {
-            IsSuccess = false;
-            _value = null;
-            _error = error;
-            _errorCode = errorCode;
-            _errorTitle = errorTitle;
         }
 
         public static Result<T> Success(T value)
