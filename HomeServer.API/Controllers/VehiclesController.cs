@@ -2,6 +2,7 @@
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.Vehicles;
+using HomeServer.Application.Dtos.VehicleServices;
 using HomeServer.Application.Interfaces.Vehicles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -56,6 +57,14 @@ namespace HomeServer.API.Controllers
         public async Task<IActionResult> GetFuelingsOfVehicle([FromRoute] Guid vehicleId, [FromQuery] PaginationRequestDto paginationDto, [FromQuery] DateFilterDto filterDto)
         {
             var result = await _vehiclesService.GetFuelingsAsync(vehicleId, paginationDto, filterDto);
+
+            return result.ToActionResult(this);
+        }
+
+        [HttpGet("{vehicleId}/services")]
+        public async Task<IActionResult> GetServicesOfVehicle([FromRoute] Guid vehicleId, [FromQuery] PaginationRequestDto paginationDto, [FromQuery] VehicleServiceForVehicleFilterDto filterDto)
+        {
+            var result = await _vehiclesService.GetServicesAsync(vehicleId, paginationDto, filterDto);
 
             return result.ToActionResult(this);
         }

@@ -425,7 +425,7 @@ namespace HomeServer.Application.Services.VehicleServices
         {
             if (!string.IsNullOrWhiteSpace(filterDto.Title))
             {
-                query = query.Where(v => v.Title.Contains(filterDto.Title));
+                query = query.Where(v => EF.Functions.ILike(v.Title, $"%{filterDto.Title}%"));
             }
 
             if (filterDto.VehicleId.HasValue)

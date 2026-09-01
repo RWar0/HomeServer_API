@@ -6,6 +6,7 @@ using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.Select;
 using HomeServer.Application.Dtos.VehicleFuelings;
 using HomeServer.Application.Dtos.Vehicles;
+using HomeServer.Application.Dtos.VehicleServices;
 using HomeServer.Application.Interfaces.Vehicles;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
@@ -215,6 +216,53 @@ namespace HomeServer.Application.Services.Vehicles
             }
         }
 
+        public async Task<Result<PagedResult<VehicleServiceForVehicleListItemDto>>> GetServicesAsync(Guid vehicleId, PaginationRequestDto paginationDto, VehicleServiceForVehicleFilterDto filterDto)
+        {
+            try
+            {
+                var baseQuery = _context.VehicleServices
+                    .AsNoTracking()
+                    .Where(item => item.VehicleId == vehicleId);
+
+                baseQuery = ApplyFiltrationForVehicleService(baseQuery, filterDto);
+
+                var totalCount = await baseQuery.CountAsync();
+
+                baseQuery = ApplySortingForVehicleServices(baseQuery, paginationDto);
+
+                var services = await baseQuery
+                    .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
+                    .Take(paginationDto.PageSize)
+                    .Select(service => new VehicleServiceForVehicleListItemDto
+                    {
+                        Id = service.Id,
+                        Title = service.Title,
+                        Cost = service.Cost,
+                        Date = service.Date,
+                        ItemsCount = service.Items.Count()
+                    })
+                    .ToListAsync();
+                
+                return Result<PagedResult<VehicleServiceForVehicleListItemDto>>.Success(new()
+                {
+                    Data = services,
+                    Pagination = new()
+                    {
+                        Page = paginationDto.Page,
+                        PageSize = paginationDto.PageSize,
+                        TotalCount = totalCount,
+                        SortBy = paginationDto.SortBy,
+                        SortDirection = paginationDto.SortDirection,
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get fuelings for vehicle with Id: {VehicleId}", vehicleId);
+                return Result.Failure("Nie można pobrać tankowań pojazdu!", ProblemType.InternalServerError);
+            }
+        }
+
         public async Task<Result<MessageResponseDto>> UpdateAsync(Guid vehicleId, UpdateVehicleDto updateDto)
         {
             try
@@ -317,6 +365,30 @@ namespace HomeServer.Application.Services.Vehicles
             };
         }
 
+        private static IQueryable<VehicleService> ApplySortingForVehicleServices(IQueryable<VehicleService> query, PaginationRequestDto paginationDto)
+        {
+            return paginationDto.SortBy?.ToLower() switch
+            {
+                "title" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Title)
+                    : query.OrderBy(x => x.Title),
+
+                "date" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Date)
+                    : query.OrderBy(x => x.Date),
+
+                "cost" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Cost)
+                    : query.OrderBy(x => x.Cost),
+
+                "vehicleid" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.VehicleId)
+                    : query.OrderBy(x => x.VehicleId),
+
+                _ => query.OrderByDescending(x => x.Date),
+            };
+        }
+
         private static IQueryable<VehicleFueling> ApplyFiltrationForVehicleFueling(IQueryable<VehicleFueling> query, DateFilterDto filterDto)
         {
             if (filterDto.FromDate.HasValue)
@@ -331,5 +403,26 @@ namespace HomeServer.Application.Services.Vehicles
 
             return query;
         }
+
+        private static IQueryable<VehicleService> ApplyFiltrationForVehicleService(IQueryable<VehicleService> query, VehicleServiceForVehicleFilterDto filterDto)
+        {
+            if (!string.IsNullOrWhiteSpace(filterDto.Title))
+            {
+                query = query.Where(v => EF.Functions.ILike(v.Title, $"%{filterDto.Title}%"));
+            }
+
+            if (filterDto.FromDate.HasValue)
+            {
+                query = query.Where(item => item.Date > filterDto.FromDate.Value);
+            }
+
+            if (filterDto.ToDate.HasValue)
+            {
+                query = query.Where(item => item.Date <= filterDto.ToDate.Value.AddDays(1));
+            }
+
+            return query;
+        }
+
     }
 }
