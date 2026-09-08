@@ -30,8 +30,7 @@ namespace HomeServer.Application.Services.Auth
 
             // Get and Validate user
             var user = await _context.Users
-                    .Where(item => item.Username.Equals(loginUserDto.Login))
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefaultAsync(item => EF.Functions.ILike(item.Username, loginUserDto.Login));
 
             if (user is null)
             {
