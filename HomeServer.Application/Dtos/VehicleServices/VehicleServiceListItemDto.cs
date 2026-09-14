@@ -6,6 +6,7 @@
         public string Title { get; set; } = default!;
         public DateOnly Date { get; set; }
         public decimal? Cost { get; set; }
+        public int? Mileage { get; set; }
         public Guid VehicleId { get; set; }
         public string VehicleName { get; set; } = default!;
 

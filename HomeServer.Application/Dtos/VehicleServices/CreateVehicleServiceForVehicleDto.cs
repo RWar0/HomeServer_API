@@ -13,6 +13,9 @@ namespace HomeServer.Application.Dtos.VehicleServices
         [NotFutureDate(Name = "Data serwisu")]
         public DateOnly Date { get; set; }
 
+        [Range(0, double.MaxValue, ErrorMessage = "Przebieg przy serwisie musi być dodatni!")]
+        public int? Mileage { get; set; }
+
         [Range(0, double.MaxValue, ErrorMessage = "Koszt serwisu musi być dodatni!")]
         public decimal? Cost { get; set; }
 

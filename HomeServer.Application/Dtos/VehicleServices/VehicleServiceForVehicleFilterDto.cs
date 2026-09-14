@@ -4,6 +4,7 @@
     {
         public Guid? VehicleId { get; set; }
         public string? Title { get; set; }
+        public int? Mileage { get; set; }
         public decimal? FromCost { get; set; }
         public decimal? ToCost { get; set; }
         public DateOnly? FromDate { get; set; }

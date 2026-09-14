@@ -29,7 +29,7 @@ namespace HomeServer.Application.Services.VehicleServices
                     return Result.Failure("Nie znaleziono pojazdu z podanym identyfikatorem!", ProblemType.NotFound);
                 }
 
-                var vehicleService = CreateVehicleService(createDto.VehicleId, createDto.Title, createDto.Date, createDto.Cost, createDto.Items);
+                var vehicleService = CreateVehicleService(createDto.VehicleId, createDto.Title, createDto.Date, createDto.Cost, createDto.Mileage, createDto.Items);
 
                 await _context.VehicleServices.AddAsync(vehicleService);
 
@@ -58,7 +58,7 @@ namespace HomeServer.Application.Services.VehicleServices
                     return Result.Failure("Nie znaleziono pojazdu z podanym identyfikatorem!", ProblemType.NotFound);
                 }
 
-                var vehicleService = CreateVehicleService(vehicleId, createDto.Title, createDto.Date, createDto.Cost, createDto.Items);
+                var vehicleService = CreateVehicleService(vehicleId, createDto.Title, createDto.Date, createDto.Cost, createDto.Mileage, createDto.Items);
 
                 await _context.VehicleServices.AddAsync(vehicleService);
 
@@ -97,6 +97,7 @@ namespace HomeServer.Application.Services.VehicleServices
                         Title = item.Title,
                         Cost = item.Cost,
                         Date = item.Date,
+                        Mileage = item.Mileage,
                         VehicleId = item.VehicleId,
                         VehicleName = $"{item.Vehicle.Brand} {item.Vehicle.Model}",
                         ItemsCount = item.Items.Count()
@@ -134,6 +135,7 @@ namespace HomeServer.Application.Services.VehicleServices
                         Id = item.Id,
                         Title = item.Title,
                         Cost = item.Cost,
+                        Mileage = item.Mileage,
                         Date = item.Date,
                         VehicleId = item.VehicleId,
                         Items = item.Items.Select(vi => new VehicleServiceItemDto
@@ -174,6 +176,7 @@ namespace HomeServer.Application.Services.VehicleServices
                         Title = item.Title,
                         Cost = item.Cost,
                         Date = item.Date,
+                        Mileage = item.Mileage,
                         Items = item.Items.Select(vi => new VehicleServiceItemDto
                         {
                             Id = vi.Id,
@@ -222,6 +225,7 @@ namespace HomeServer.Application.Services.VehicleServices
 
                 vehicleService.Title = updateDto.Title;
                 vehicleService.Cost = updateDto.Cost;
+                vehicleService.Mileage = updateDto.Mileage;
                 vehicleService.Date = updateDto.Date;
                 vehicleService.VehicleId = updateDto.VehicleId;
 
@@ -261,6 +265,7 @@ namespace HomeServer.Application.Services.VehicleServices
 
                 vehicleService.Title = updateDto.Title;
                 vehicleService.Cost = updateDto.Cost;
+                vehicleService.Mileage = updateDto.Mileage;
                 vehicleService.Date = updateDto.Date;
 
                 var syncResult = SyncItems(vehicleService, updateDto.Items);
@@ -319,12 +324,13 @@ namespace HomeServer.Application.Services.VehicleServices
         }
 
         // Helpers
-        private static VehicleService CreateVehicleService(Guid vehicleId, string title, DateOnly date, decimal? cost, IEnumerable<CreateVehicleServiceItemDto> items)
+        private static VehicleService CreateVehicleService(Guid vehicleId, string title, DateOnly date, decimal? cost, int? mileage, IEnumerable<CreateVehicleServiceItemDto> items)
         {
             return new VehicleService
             {
                 Title = title,
                 Cost = cost,
+                Mileage = mileage,
                 Date = date,
                 VehicleId = vehicleId,
                 Items = [.. items.Select(item => new VehicleServiceItem
@@ -342,7 +348,7 @@ namespace HomeServer.Application.Services.VehicleServices
         /// <param name="vehicleService">Entity from DB to sync items</param>
         /// <param name="itemDtos">DTOs to synchronize</param>
         /// <returns>Result indicating whether synchronization succeeded or failed</returns>
-        private Result SyncItems(VehicleService vehicleService, List<UpdateVehicleServiceItemDto> itemDtos)
+        private static Result SyncItems(VehicleService vehicleService, List<UpdateVehicleServiceItemDto> itemDtos)
         {
             var itemIds = itemDtos
                     .Where(x => x.Id.HasValue)
@@ -412,6 +418,10 @@ namespace HomeServer.Application.Services.VehicleServices
                 "cost" => paginationDto.SortDirection == SortDirection.Desc
                     ? query.OrderByDescending(x => x.Cost)
                     : query.OrderBy(x => x.Cost),
+
+                "mileage" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Mileage)
+                    : query.OrderBy(x => x.Mileage),
 
                 "vehicleid" => paginationDto.SortDirection == SortDirection.Desc
                     ? query.OrderByDescending(x => x.VehicleId)

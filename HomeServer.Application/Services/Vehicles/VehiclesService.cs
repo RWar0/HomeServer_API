@@ -238,6 +238,7 @@ namespace HomeServer.Application.Services.Vehicles
                         Id = service.Id,
                         Title = service.Title,
                         Cost = service.Cost,
+                        Mileage = service.Mileage,
                         Date = service.Date,
                         ItemsCount = service.Items.Count()
                     })
@@ -380,6 +381,10 @@ namespace HomeServer.Application.Services.Vehicles
                 "cost" => paginationDto.SortDirection == SortDirection.Desc
                     ? query.OrderByDescending(x => x.Cost)
                     : query.OrderBy(x => x.Cost),
+
+                "mileage" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Mileage)
+                    : query.OrderBy(x => x.Mileage),
 
                 "vehicleid" => paginationDto.SortDirection == SortDirection.Desc
                     ? query.OrderByDescending(x => x.VehicleId)

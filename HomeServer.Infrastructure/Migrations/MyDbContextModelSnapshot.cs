@@ -49,7 +49,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Aquariums", (string)null);
+                    b.ToTable("Aquariums");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.ParameterCheck", b =>
@@ -97,7 +97,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("MeasuredAt");
 
-                    b.ToTable("ParameterChecks", (string)null);
+                    b.ToTable("ParameterChecks");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.StoredFile", b =>
@@ -149,7 +149,7 @@ namespace HomeServer.Infrastructure.Migrations
                     b.HasIndex("RelativePath")
                         .IsUnique();
 
-                    b.ToTable("StoredFiles", (string)null);
+                    b.ToTable("StoredFiles");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.User", b =>
@@ -194,7 +194,7 @@ namespace HomeServer.Infrastructure.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.UserRefreshToken", b =>
@@ -247,7 +247,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserRefreshTokens", (string)null);
+                    b.ToTable("UserRefreshTokens");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.Vehicle", b =>
@@ -281,7 +281,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Vehicles", (string)null);
+                    b.ToTable("Vehicles");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.VehicleFueling", b =>
@@ -317,7 +317,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("VehicleId");
 
-                    b.ToTable("VehicleFuelings", (string)null);
+                    b.ToTable("VehicleFuelings");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.VehicleService", b =>
@@ -338,6 +338,9 @@ namespace HomeServer.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("Mileage")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
@@ -356,7 +359,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("VehicleId", "Date");
 
-                    b.ToTable("VehicleServices", (string)null);
+                    b.ToTable("VehicleServices");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.VehicleServiceItem", b =>
@@ -395,7 +398,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("VehicleServiceId", "Title");
 
-                    b.ToTable("VehicleServiceItem", (string)null);
+                    b.ToTable("VehicleServiceItem");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.WaterChange", b =>
@@ -428,7 +431,7 @@ namespace HomeServer.Infrastructure.Migrations
 
                     b.HasIndex("ChangeDate");
 
-                    b.ToTable("WaterChanges", (string)null);
+                    b.ToTable("WaterChanges");
                 });
 
             modelBuilder.Entity("HomeServer.Domain.Models.ParameterCheck", b =>

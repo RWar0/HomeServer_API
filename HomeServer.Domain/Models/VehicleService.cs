@@ -6,6 +6,7 @@ namespace HomeServer.Domain.Models
     {
         public string Title { get; set; } = default!;
         public DateOnly Date { get; set; }
+        public int? Mileage { get; set; }
         public decimal? Cost { get; set; }
 
         public Guid VehicleId { get; set; }
