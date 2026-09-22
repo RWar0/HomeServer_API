@@ -5,6 +5,7 @@ using HomeServer.API.Middleware.ExceptionHandling;
 using HomeServer.Application.Configuration.Jwt;
 using HomeServer.Application.Interfaces.Aquariums;
 using HomeServer.Application.Interfaces.Auth;
+using HomeServer.Application.Interfaces.CustomEvents;
 using HomeServer.Application.Interfaces.MyFiles;
 using HomeServer.Application.Interfaces.ParameterChecks;
 using HomeServer.Application.Interfaces.StoredFiles;
@@ -16,6 +17,7 @@ using HomeServer.Application.Interfaces.VehicleServices;
 using HomeServer.Application.Interfaces.WaterChanges;
 using HomeServer.Application.Services.Aquariums;
 using HomeServer.Application.Services.Auth;
+using HomeServer.Application.Services.CustomEvents;
 using HomeServer.Application.Services.MyFiles;
 using HomeServer.Application.Services.ParameterChecks;
 using HomeServer.Application.Services.StoredFiles;
@@ -128,6 +130,8 @@ namespace HomeServer.API
             builder.Services.AddScoped<IVehiclesService, VehiclesService>();
             builder.Services.AddScoped<IVehicleFuelingsService, VehicleFuelingsService>();
             builder.Services.AddScoped<IVehicleServicesService, VehicleServicesService>();
+
+            builder.Services.AddScoped<ICustomEventsService, CustomEventsService>();
             #endregion
 
             #region CORS Policies - Dev and Prod

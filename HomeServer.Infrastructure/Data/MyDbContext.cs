@@ -21,6 +21,7 @@ namespace HomeServer.Infrastructure.Data
         public required DbSet<Vehicle> Vehicles { get; set; }
         public required DbSet<VehicleFueling> VehicleFuelings { get; set; }
         public required DbSet<VehicleService> VehicleServices { get; set; }
+        public required DbSet<CustomEvent> CustomEvents { get; set; }
         #endregion
 
 
