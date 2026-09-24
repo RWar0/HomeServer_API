@@ -161,7 +161,7 @@ namespace HomeServer.Application.Services.VehicleServices
                     {
                         Id = item.Id,
                         Title = item.Title,
-                        Cost = item.Cost,
+                        Cost = GetExactEnteredOrCalculatedCost(item),
                         Mileage = item.Mileage,
                         Date = item.Date,
                         VehicleName = $"{item.Vehicle.Brand} {item.Vehicle.Model}",
