@@ -1,10 +1,13 @@
 ﻿using HomeServer.Application.Base;
 using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Results;
+using HomeServer.Application.Dtos.CalendarEvent;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.WaterChanges;
+using HomeServer.Application.Interfaces.Calendar;
 using HomeServer.Application.Interfaces.WaterChanges;
+using HomeServer.Domain.Enums;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.WaterChanges
 {
-    public class WaterChangesService : BaseService, IWaterChangesService
+    public class WaterChangesService : BaseService, IWaterChangesService, ICalendarEventProvider
     {
         public WaterChangesService(MyDbContext context, ILogger<WaterChangesService> logger) : base(context, logger) { }
 
@@ -127,6 +130,27 @@ namespace HomeServer.Application.Services.WaterChanges
                 return Result.Failure("Nie można pobrać podmian wody z bazy danych!", ProblemType.InternalServerError);
             }
         }
+
+        public async Task<IEnumerable<CalendarEventDto>> GetCalendarEventsAsync(DateFilterDto filterDto, CancellationToken ct)
+        {
+            var items = await _context.WaterChanges
+                .Where(item => item.ChangeDate >= filterDto.FromDate && item.ChangeDate <= filterDto.ToDate)
+                .Select(item => new CalendarEventDto
+                {
+                    Id = item.Id,
+                    Title = "Podmiana wody",
+                    Description = $"Podmiana {item.Amount} litrów wody w akwarium: {item.Aquarium.Name}.",
+                    Location = $"Akwarium {item.Aquarium.Name}",
+                    Date = item.ChangeDate,
+                    Time = null,
+                    Category = CalendarEventCategoryEnum.Aquarium.ToString(),
+                    IsCustomEvent = false
+                })
+                .ToListAsync(ct);
+
+            return items;
+        }
+
 
         public async Task<Result<WaterChangeEditDto>> GetForEditAsync(Guid waterChangeId)
         {

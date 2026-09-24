@@ -1,6 +1,6 @@
 ﻿namespace HomeServer.Domain.Enums
 {
-    public enum CustomEventCategoryEnum
+    public enum CalendarEventCategoryEnum
     {
         Aquarium = 0,
         Vehicle = 1,

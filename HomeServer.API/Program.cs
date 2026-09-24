@@ -5,6 +5,7 @@ using HomeServer.API.Middleware.ExceptionHandling;
 using HomeServer.Application.Configuration.Jwt;
 using HomeServer.Application.Interfaces.Aquariums;
 using HomeServer.Application.Interfaces.Auth;
+using HomeServer.Application.Interfaces.Calendar;
 using HomeServer.Application.Interfaces.CustomEvents;
 using HomeServer.Application.Interfaces.MyFiles;
 using HomeServer.Application.Interfaces.ParameterChecks;
@@ -17,6 +18,7 @@ using HomeServer.Application.Interfaces.VehicleServices;
 using HomeServer.Application.Interfaces.WaterChanges;
 using HomeServer.Application.Services.Aquariums;
 using HomeServer.Application.Services.Auth;
+using HomeServer.Application.Services.Calendar;
 using HomeServer.Application.Services.CustomEvents;
 using HomeServer.Application.Services.MyFiles;
 using HomeServer.Application.Services.ParameterChecks;
@@ -124,14 +126,25 @@ namespace HomeServer.API
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             builder.Services.AddScoped<IAquariumsService, AquariumsService>();
+
             builder.Services.AddScoped<IWaterChangesService, WaterChangesService>();
+            builder.Services.AddScoped<ICalendarEventProvider, WaterChangesService>();
+
             builder.Services.AddScoped<IParameterChecksService, ParameterChecksService>();
+            builder.Services.AddScoped<ICalendarEventProvider, ParameterChecksService>();
 
             builder.Services.AddScoped<IVehiclesService, VehiclesService>();
+
             builder.Services.AddScoped<IVehicleFuelingsService, VehicleFuelingsService>();
+            builder.Services.AddScoped<ICalendarEventProvider, VehicleFuelingsService>();
+
             builder.Services.AddScoped<IVehicleServicesService, VehicleServicesService>();
+            builder.Services.AddScoped<ICalendarEventProvider, VehicleServicesService>();
+
+            builder.Services.AddScoped<ICalendarService, CalendarService>();
 
             builder.Services.AddScoped<ICustomEventsService, CustomEventsService>();
+            builder.Services.AddScoped<ICalendarEventProvider, CustomEventsService>();
             #endregion
 
             #region CORS Policies - Dev and Prod

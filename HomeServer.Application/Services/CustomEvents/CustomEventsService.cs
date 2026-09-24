@@ -4,7 +4,9 @@ using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.CalendarEvent;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.CustomEvents;
+using HomeServer.Application.Interfaces.Calendar;
 using HomeServer.Application.Interfaces.CustomEvents;
+using HomeServer.Domain.Enums;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +14,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.CustomEvents
 {
-    public class CustomEventsService : BaseService, ICustomEventsService
+    public class CustomEventsService : BaseService, ICustomEventsService, ICalendarEventProvider
     {
         public CustomEventsService(MyDbContext context, ILogger<CustomEventsService> logger) : base(context, logger) { }
 
@@ -76,6 +78,28 @@ namespace HomeServer.Application.Services.CustomEvents
                 return Result.Failure("Nie można pobrać wydarzeń!", ProblemType.InternalServerError);
             }
         }
+
+        public async Task<IEnumerable<CalendarEventDto>> GetCalendarEventsAsync(DateFilterDto filterDto, CancellationToken ct)
+        {
+            var items = await _context.CustomEvents
+                .Where(item => item.Date >= filterDto.FromDate && item.Date <= filterDto.ToDate)
+                .Select(item => new CalendarEventDto
+                {
+                    Id = item.Id,
+                    Title = item.Title,
+                    Description = item.Description,
+                    Location = item.Location,
+                    Date = item.Date,
+                    Time = item.Time,
+                    CompletionDate = item.CompletionDate,
+                    Category = item.Category.ToString(),
+                    IsCustomEvent = true,
+                })
+                .ToListAsync(ct);
+
+            return items;
+        }
+
 
         public async Task<Result<CalendarEventDto>> GetByIdAsync(Guid customEventId)
         {

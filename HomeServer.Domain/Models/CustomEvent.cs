@@ -11,7 +11,7 @@ namespace HomeServer.Domain.Models
 
         public string? Location { get; set; }
 
-        public CustomEventCategoryEnum? Category { get; set; }
+        public CalendarEventCategoryEnum? Category { get; set; }
 
         public DateOnly Date { get; set; }
         public TimeOnly? Time { get; set; }

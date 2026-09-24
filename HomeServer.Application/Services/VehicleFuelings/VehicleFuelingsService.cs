@@ -1,10 +1,13 @@
 ﻿using HomeServer.Application.Base;
 using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Results;
+using HomeServer.Application.Dtos.CalendarEvent;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.VehicleFuelings;
+using HomeServer.Application.Interfaces.Calendar;
 using HomeServer.Application.Interfaces.VehicleFuelings;
+using HomeServer.Domain.Enums;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.VehicleFuelings
 {
-    public class VehicleFuelingsService : BaseService, IVehicleFuelingsService
+    public class VehicleFuelingsService : BaseService, IVehicleFuelingsService, ICalendarEventProvider
     {
         public VehicleFuelingsService(MyDbContext context, ILogger<VehicleFuelingsService> logger) : base(context, logger)
         { }
@@ -132,6 +135,27 @@ namespace HomeServer.Application.Services.VehicleFuelings
                 return Result.Failure("Nie można załadować tankowań pojazdów!", ProblemType.InternalServerError);
             }
         }
+
+        public async Task<IEnumerable<CalendarEventDto>> GetCalendarEventsAsync(DateFilterDto filterDto, CancellationToken ct)
+        {
+            var items = await _context.VehicleFuelings
+                .Where(item => item.Date >= filterDto.FromDate && item.Date <= filterDto.ToDate)
+                .Select(item => new CalendarEventDto
+                {
+                    Id = item.Id,
+                    Title = "Tankowanie pojazdu",
+                    Description = $"Zatankowano {item.Quantity}l do: {item.Vehicle.Brand} {item.Vehicle.Model}.",
+                    Location = $"{item.Vehicle.Brand} {item.Vehicle.Model}",
+                    Date = item.Date,
+                    Time = null,
+                    Category = CalendarEventCategoryEnum.Vehicle.ToString(),
+                    IsCustomEvent = false
+                })
+                .ToListAsync(ct);
+
+            return items;
+        }
+
 
         public async Task<Result<VehicleFuelingEditDto>> GetForEditAsync(Guid vehicleFuelingId)
         {

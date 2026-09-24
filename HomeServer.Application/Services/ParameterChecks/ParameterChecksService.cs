@@ -1,10 +1,13 @@
 ﻿using HomeServer.Application.Base;
 using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Results;
+using HomeServer.Application.Dtos.CalendarEvent;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.ParameterChecks;
+using HomeServer.Application.Interfaces.Calendar;
 using HomeServer.Application.Interfaces.ParameterChecks;
+using HomeServer.Domain.Enums;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.ParameterChecks
 {
-    public class ParameterChecksService : BaseService, IParameterChecksService
+    public class ParameterChecksService : BaseService, IParameterChecksService, ICalendarEventProvider
     {
         public ParameterChecksService(MyDbContext context, ILogger<ParameterChecksService> logger) : base(context, logger)
         {
@@ -22,7 +25,7 @@ namespace HomeServer.Application.Services.ParameterChecks
         {
             try
             {
-                if(!CheckIfAnyParameterExistForCreateUpdate(createDto))
+                if (!CheckIfAnyParameterExistForCreateUpdate(createDto))
                 {
                     return Result.Failure("Należy podać co najmniej jeden parametr (wartości: Ph, Kh, Gh, NO2, NO3, Temperatura)", ProblemType.BadRequest);
                 }
@@ -65,7 +68,7 @@ namespace HomeServer.Application.Services.ParameterChecks
         {
             try
             {
-                if(!CheckIfAnyParameterExistForCreateUpdate(createDto))
+                if (!CheckIfAnyParameterExistForCreateUpdate(createDto))
                 {
                     return Result.Failure("Należy podać co najmniej jeden parametr (wartości: Ph, Kh, Gh, NO2, NO3, Temperatura)", ProblemType.BadRequest);
                 }
@@ -155,9 +158,37 @@ namespace HomeServer.Application.Services.ParameterChecks
             }
         }
 
+        public async Task<IEnumerable<CalendarEventDto>> GetCalendarEventsAsync(DateFilterDto filterDto, CancellationToken ct)
+        {
+            var items = await _context.ParameterChecks
+                .Where(item => item.MeasuredAt >= filterDto.FromDate && item.MeasuredAt <= filterDto.ToDate)
+                .Select(item => new CalendarEventDto
+                {
+                    Id = item.Id,
+                    Title = "Pomiar parametrów",
+                    Description = $"Pomiar parametrów w akwarium: {item.Aquarium.Name}. \n" +
+                        $"Dane: \n" +
+                        $"Ph: {GetValueOrDash(item.Ph)} \n" +
+                        $"Gh: {GetValueOrDash(item.Gh)} \n" +
+                        $"Kh: {GetValueOrDash(item.Kh)} \n" +
+                        $"No2: {GetValueOrDash(item.No2)} \n" +
+                        $"No3: {GetValueOrDash(item.No3)} \n" +
+                        $"Temperatura: {GetValueOrDash(item.Temperature)}",
+                    Location = $"Akwarium {item.Aquarium.Name}",
+                    Date = item.MeasuredAt,
+                    Time = null,
+                    Category = CalendarEventCategoryEnum.Aquarium.ToString(),
+                    IsCustomEvent = false
+                })
+                .ToListAsync(ct);
+
+            return items;
+        }
+
         public async Task<Result<ParameterCheckEditResponseDto>> GetForEditAsync(Guid parameterCheckId)
         {
-            try {
+            try
+            {
                 var result = await _context.ParameterChecks.Where(item => item.Id == parameterCheckId)
                     .Select(item => new ParameterCheckEditResponseDto
                     {
@@ -173,7 +204,7 @@ namespace HomeServer.Application.Services.ParameterChecks
                     })
                     .FirstOrDefaultAsync();
 
-                if(result is null)
+                if (result is null)
                 {
                     return Result.Failure("Nie znaleziono podanego pomiaru parametrów", ProblemType.NotFound);
                 }
@@ -299,6 +330,7 @@ namespace HomeServer.Application.Services.ParameterChecks
             }
         }
 
+        // Helpers
         private static IQueryable<ParameterCheck> ApplySortingForParameterChecks(IQueryable<ParameterCheck> query, PaginationRequestDto paginationDto)
         {
             return paginationDto.SortBy?.ToLower() switch
@@ -353,6 +385,11 @@ namespace HomeServer.Application.Services.ParameterChecks
         private static bool CheckIfAnyParameterExistForCreateUpdate(UpdateParameterCheckForAquariumDto dto)
         {
             return dto.Temperature.HasValue || dto.Ph.HasValue || dto.Kh.HasValue || dto.Gh.HasValue || dto.No2.HasValue || dto.No3.HasValue;
+        }
+
+        private static string GetValueOrDash(object? a)
+        {
+            return a?.ToString() ?? "-";
         }
     }
 }

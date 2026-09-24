@@ -12,7 +12,7 @@ namespace HomeServer.Application.Dtos.CustomEvents
         public string? Location { get; set; }
 
         [Required(AllowEmptyStrings = false, ErrorMessage = "Kategoria wydarzenia jest wymagana!")]
-        public CustomEventCategoryEnum? Category { get; set; }
+        public CalendarEventCategoryEnum? Category { get; set; }
 
         [Required(AllowEmptyStrings = false, ErrorMessage = "Data wykonania jest wymagana!")]
         public DateOnly Date { get; set; }

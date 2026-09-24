@@ -1,11 +1,14 @@
 ﻿using HomeServer.Application.Base;
 using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Results;
+using HomeServer.Application.Dtos.CalendarEvent;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.VehicleServiceItems;
 using HomeServer.Application.Dtos.VehicleServices;
+using HomeServer.Application.Interfaces.Calendar;
 using HomeServer.Application.Interfaces.VehicleServices;
+using HomeServer.Domain.Enums;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +16,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.VehicleServices
 {
-    public class VehicleServicesService : BaseService, IVehicleServicesService
+    public class VehicleServicesService : BaseService, IVehicleServicesService, ICalendarEventProvider
     {
         public VehicleServicesService(MyDbContext context, ILogger<VehicleServicesService> logger) : base(context, logger)
         { }
@@ -123,6 +126,30 @@ namespace HomeServer.Application.Services.VehicleServices
                 return Result.Failure("Nie można załadować serwisów pojazdów!", ProblemType.InternalServerError);
             }
         }
+
+        public async Task<IEnumerable<CalendarEventDto>> GetCalendarEventsAsync(DateFilterDto filterDto, CancellationToken ct)
+        {
+            var items = await _context.VehicleServices
+                .Where(item => item.Date >= filterDto.FromDate && item.Date <= filterDto.ToDate)
+                .Select(item => new CalendarEventDto
+                {
+                    Id = item.Id,
+                    Title = "Serwis pojazdu",
+                    Description = $"Serwis pojazdu: {item.Vehicle.Brand} {item.Vehicle.Model}. \n" +
+                        $"Tytuł: \"{item.Title}\". \n" +
+                        $"{GetCostLabelForCalendarEvent(item)} \n" +
+                        $"Ilość pozycji serwisu: {item.Items.Count()}.",
+                    Location = $"{item.Vehicle.Brand} {item.Vehicle.Model}",
+                    Date = item.Date,
+                    Time = null,
+                    Category = CalendarEventCategoryEnum.Vehicle.ToString(),
+                    IsCustomEvent = false
+                })
+                .ToListAsync(ct);
+
+            return items;
+        }
+
 
         public async Task<Result<VehicleServiceEditDto>> GetForEditAsync(Guid vehicleServiceId)
         {
@@ -456,5 +483,41 @@ namespace HomeServer.Application.Services.VehicleServices
             return query;
         }
 
+        /// <summary>
+        /// Method returns the cost of the vehicle service, either from the Cost property or calculated from the sum of the costs of its items.
+        /// If any of the items does not have a cost, it returns null.
+        /// </summary>
+        /// <param name="vehicleService">Vehicle service for which to calculate the cost</param>
+        /// <returns>The cost of the vehicle service or null if any of the items cannot be determined</returns>
+        private static decimal? GetExactEnteredOrCalculatedCost(VehicleService vehicleService)
+        {
+            if (vehicleService.Cost.HasValue)
+            {
+                return vehicleService.Cost.Value;
+            }
+
+            if (vehicleService.Items.Count > 0)
+            {
+                decimal sum = 0;
+
+                foreach (var item in vehicleService.Items)
+                {
+                    if (!item.Cost.HasValue)
+                    {
+                        return null;
+                    }
+
+                    sum += item.Cost.Value;
+                }
+            }
+
+            return null;
+        }
+
+        private static string GetCostLabelForCalendarEvent(VehicleService vehicleService)
+        {
+            var cost = GetExactEnteredOrCalculatedCost(vehicleService);
+            return cost.HasValue ? $"Koszt: {cost.Value:C}." : "Koszt nie został oreślony.";
+        }
     }
 }
