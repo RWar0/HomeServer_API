@@ -149,6 +149,7 @@ namespace HomeServer.Application.Services.VehicleFuelings
                     Date = item.Date,
                     Time = null,
                     Category = CalendarEventCategoryEnum.Vehicle.ToString(),
+                    SubCategory = CalendarEventSubCategoryEnum.VehicleFueling.ToString(),
                     IsCustomEvent = false
                 })
                 .ToListAsync(ct);
@@ -156,6 +157,35 @@ namespace HomeServer.Application.Services.VehicleFuelings
             return items;
         }
 
+        public async Task<Result<VehicleFuelingDto>> GetById(Guid vehicleFuelingId)
+        {
+            try
+            {
+                var vehicleFueling = await _context.VehicleFuelings
+                    .Where(item => item.Id == vehicleFuelingId)
+                    .Select(item => new VehicleFuelingDto
+                    {
+                        Id = item.Id,
+                        Cost = item.Cost,
+                        Date = item.Date,
+                        Quantity = item.Quantity,
+                        VehicleName = $"{item.Vehicle.Brand} {item.Vehicle.Model}"
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (vehicleFueling is null)
+                {
+                    return Result.Failure("Nie znaleziono tankowania pojazdu z podanym identyfikatorem!", ProblemType.NotFound);
+                }
+
+                return Result.Success(vehicleFueling);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get vehicle fueling for edit with Id: {VehicleFuelingId}", vehicleFuelingId);
+                return Result.Failure("Nie można pobrać tankowania pojazdu z podanym identyfikatorem!", ProblemType.InternalServerError);
+            }
+        }
 
         public async Task<Result<VehicleFuelingEditDto>> GetForEditAsync(Guid vehicleFuelingId)
         {

@@ -46,6 +46,14 @@ namespace HomeServer.API.Controllers
             return result.ToActionResult(this);
         }
         
+        [HttpGet("{waterChangeId}")]
+        public async Task<ActionResult<WaterChangeDto>> GetById([FromRoute] Guid waterChangeId)
+        {
+            var result = await _waterChangesService.GetByIdAsync(waterChangeId);
+
+            return result.ToActionResult(this);
+        }
+        
         [HttpGet("{waterChangeId}/for-edit")]
         public async Task<ActionResult<WaterChangeEditDto>> GetForEdit([FromRoute] Guid waterChangeId)
         {

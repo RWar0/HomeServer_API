@@ -43,8 +43,16 @@ namespace HomeServer.API.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpGet("{vehicleFuelingId}/for-edit")]
+        [HttpGet("{vehicleFuelingId}")]
         public async Task<IActionResult> GetById([FromRoute] Guid vehicleFuelingId)
+        {
+            var result = await _vehicleFuelingsService.GetById(vehicleFuelingId);
+
+            return result.ToActionResult(this);
+        }
+
+        [HttpGet("{vehicleFuelingId}/for-edit")]
+        public async Task<IActionResult> GetForEditById([FromRoute] Guid vehicleFuelingId)
         {
             var result = await _vehicleFuelingsService.GetForEditAsync(vehicleFuelingId);
 

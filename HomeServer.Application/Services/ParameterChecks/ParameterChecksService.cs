@@ -178,11 +178,45 @@ namespace HomeServer.Application.Services.ParameterChecks
                     Date = item.MeasuredAt,
                     Time = null,
                     Category = CalendarEventCategoryEnum.Aquarium.ToString(),
+                    SubCategory = CalendarEventSubCategoryEnum.ParameterCheck.ToString(),
                     IsCustomEvent = false
                 })
                 .ToListAsync(ct);
 
             return items;
+        }
+
+        public async Task<Result<ParameterCheckDto>> GetByIdAsync(Guid parameterCheckId)
+        {
+            try
+            {
+                var result = await _context.ParameterChecks.Where(item => item.Id == parameterCheckId)
+                    .Select(item => new ParameterCheckDto
+                    {
+                        Id = parameterCheckId,
+                        MeasuredAt = item.MeasuredAt,
+                        Ph = item.Ph,
+                        Gh = item.Gh,
+                        Kh = item.Kh,
+                        No2 = item.No2,
+                        No3 = item.No3,
+                        Temperature = item.Temperature,
+                        AquariumName = item.Aquarium.Name,
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (result is null)
+                {
+                    return Result.Failure("Nie znaleziono podanego pomiaru parametrów", ProblemType.NotFound);
+                }
+
+                return Result.Success(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get parameter check with Id: {ParameterCheckId}", parameterCheckId);
+                return Result.Failure("Nie można pobrać podanego pomiaru parametrów!", ProblemType.InternalServerError);
+            }
         }
 
         public async Task<Result<ParameterCheckEditResponseDto>> GetForEditAsync(Guid parameterCheckId)

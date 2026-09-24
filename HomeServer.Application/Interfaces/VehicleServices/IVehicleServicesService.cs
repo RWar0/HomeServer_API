@@ -10,6 +10,7 @@ namespace HomeServer.Application.Interfaces.VehicleServices
         public Task<Result<MessageResponseDto>> CreateAsync(CreateVehicleServiceDto createDto);
         public Task<Result<MessageResponseDto>> CreateForVehicleAsync(Guid vehicleId, CreateVehicleServiceForVehicleDto createDto);
         public Task<Result<PagedResult<VehicleServiceListItemDto>>> GetAllAsync(PaginationRequestDto paginationDto, VehicleServiceFilterDto filterDto);
+        public Task<Result<VehicleServiceDto>> GetByIdAsync(Guid vehicleServiceId);
         public Task<Result<VehicleServiceEditDto>> GetForEditAsync(Guid vehicleServiceId);
         public Task<Result<VehicleServiceForVehicleEditDto>> GetForEditWithoutVehicleAsync(Guid vehicleServiceId);
         public Task<Result<MessageResponseDto>> UpdateAsync(Guid vehicleServiceId, UpdateVehicleServiceDto updateDto);

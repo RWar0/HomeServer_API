@@ -43,6 +43,14 @@ namespace HomeServer.API.Controllers
             return parameterChecks.ToActionResult(this);
         }
 
+        [HttpGet("{parameterCheckId}")]
+        public async Task<IActionResult> GetById([FromRoute] Guid parameterCheckId)
+        {
+            var parameterChecks = await _parametersCheckService.GetByIdAsync(parameterCheckId);
+
+            return parameterChecks.ToActionResult(this);
+        }
+
         [HttpGet("{parameterCheckId}/for-edit")]
         public async Task<IActionResult> GetParameterChecksForEdit([FromRoute] Guid parameterCheckId)
         {

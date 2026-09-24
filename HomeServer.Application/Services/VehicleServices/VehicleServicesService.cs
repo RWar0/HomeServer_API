@@ -143,6 +143,7 @@ namespace HomeServer.Application.Services.VehicleServices
                     Date = item.Date,
                     Time = null,
                     Category = CalendarEventCategoryEnum.Vehicle.ToString(),
+                    SubCategory = CalendarEventSubCategoryEnum.VehicleService.ToString(),
                     IsCustomEvent = false
                 })
                 .ToListAsync(ct);
@@ -150,6 +151,45 @@ namespace HomeServer.Application.Services.VehicleServices
             return items;
         }
 
+        public async Task<Result<VehicleServiceDto>> GetByIdAsync(Guid vehicleServiceId)
+        {
+            try
+            {
+                var vehicleService = await _context.VehicleServices
+                    .Where(item => item.Id == vehicleServiceId)
+                    .Select(item => new VehicleServiceDto
+                    {
+                        Id = item.Id,
+                        Title = item.Title,
+                        Cost = item.Cost,
+                        Mileage = item.Mileage,
+                        Date = item.Date,
+                        VehicleName = $"{item.Vehicle.Brand} {item.Vehicle.Model}",
+                        Items = item.Items.Select(vi => new VehicleServiceItemDto
+                        {
+                            Id = vi.Id,
+                            Title = vi.Title,
+                            Cost = vi.Cost,
+                            Description = vi.Description,
+                        })
+                            .OrderBy(vi => vi.Title)
+                            .ToList(),
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (vehicleService is null)
+                {
+                    return Result.Failure("Nie znaleziono serwisu pojazdu z podanym identyfikatorem!", ProblemType.NotFound);
+                }
+
+                return Result.Success(vehicleService);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get vehicle service for edit with Id: {VehicleServiceId}", vehicleServiceId);
+                return Result.Failure("Nie można pobrać serwisu pojazdu z podanym identyfikatorem!", ProblemType.InternalServerError);
+            }
+        }
 
         public async Task<Result<VehicleServiceEditDto>> GetForEditAsync(Guid vehicleServiceId)
         {

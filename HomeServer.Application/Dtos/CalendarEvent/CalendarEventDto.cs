@@ -9,6 +9,7 @@
         public string? Location { get; set; }
 
         public string? Category { get; set; }
+        public string? SubCategory { get; set; }
 
         public DateOnly Date { get; set; }
         public TimeOnly? Time { get; set; }

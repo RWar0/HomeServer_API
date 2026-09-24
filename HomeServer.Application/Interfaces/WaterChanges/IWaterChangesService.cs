@@ -10,6 +10,7 @@ namespace HomeServer.Application.Interfaces.WaterChanges
         public Task<Result<MessageResponseDto>> CreateAsync(CreateWaterChangeDto createDto);
         public Task<Result<MessageResponseDto>> CreateForAquariumAsync(Guid aquariumId, CreateWaterChangeForAquariumDto createDto);
         public Task<Result<PagedResult<WaterChangeListItemDto>>> GetAllAsync(PaginationRequestDto paginationDto, WaterChangeFilterDto filterDto);
+        public Task<Result<WaterChangeDto>> GetByIdAsync(Guid waterChangeId);
         public Task<Result<WaterChangeEditDto>> GetForEditAsync(Guid waterChangeId);
         public Task<Result<WaterChangeEditForAquariumDto>> GetForAquariumEditAsync(Guid waterChangeId);
         public Task<Result<MessageResponseDto>> UpdateAsync(Guid waterChangeId, UpdateWaterChangeDto updateDto);

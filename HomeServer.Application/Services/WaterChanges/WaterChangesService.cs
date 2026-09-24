@@ -144,6 +144,7 @@ namespace HomeServer.Application.Services.WaterChanges
                     Date = item.ChangeDate,
                     Time = null,
                     Category = CalendarEventCategoryEnum.Aquarium.ToString(),
+                    SubCategory = CalendarEventSubCategoryEnum.WaterChange.ToString(),
                     IsCustomEvent = false
                 })
                 .ToListAsync(ct);
@@ -151,6 +152,34 @@ namespace HomeServer.Application.Services.WaterChanges
             return items;
         }
 
+        public async Task<Result<WaterChangeDto>> GetByIdAsync(Guid waterChangeId)
+        {
+            try
+            {
+                var result = await _context.WaterChanges
+                    .Where(item => item.Id == waterChangeId)
+                    .Select(item => new WaterChangeDto
+                    {
+                        Id = item.Id,
+                        Amount = item.Amount,
+                        ChangeDate = item.ChangeDate,
+                        AquariumName = item.Aquarium.Name
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (result is null)
+                {
+                    return Result.Failure("Nie znaleziono podmiany wody z podanym identyfikatorem!", ProblemType.NotFound);
+                }
+
+                return Result.Success(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get water change with Id: {WaterChangeId}", waterChangeId);
+                return Result.Failure("Nie można pobrać podanej podmiany wody!", ProblemType.InternalServerError);
+            }
+        }
 
         public async Task<Result<WaterChangeEditDto>> GetForEditAsync(Guid waterChangeId)
         {
