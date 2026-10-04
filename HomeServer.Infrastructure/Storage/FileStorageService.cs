@@ -5,7 +5,7 @@
 
         public FileStorageService() { }
 
-        public async Task<FileStorageResult> SaveAsync(Stream stream, string fileName, string contentType, string? subDirectory)
+        public async Task<FileStorageResult> SaveAsync(Stream stream, string fileName, string contentType, string? subDirectory = null)
         {
             var rootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Storage");
             var safeRootPath = Path.GetFullPath(rootPath)
@@ -43,6 +43,20 @@
                 Size = fileStream.Length
             };
         }
+
+        public string GetFullFilePath(string relativePath)
+        {
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);
+        }
+
+        public bool IsFileExists(string relativePath)
+        {
+            var fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);
+
+            return File.Exists(fullPath);
+        }
+
+        public string GetExtension(string fullPath) => Path.GetExtension(fullPath);
 
         public async Task DeleteAsync(string relativePath)
         {

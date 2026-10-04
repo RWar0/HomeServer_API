@@ -12,7 +12,11 @@ namespace HomeServer.Infrastructure.Data.Configurations
             builder.HasIndex(x => x.ExpiresAt);
             builder.HasIndex(x => x.RevokedAt);
 
-            builder.Property(x => x.RowVersion).IsRowVersion();
+            builder.Property<uint>("Version")
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
         }
     }
 }

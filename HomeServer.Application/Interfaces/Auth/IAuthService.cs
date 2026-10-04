@@ -6,8 +6,8 @@ namespace HomeServer.Application.Interfaces.Auth
 {
     public interface IAuthService
     {
-        public Task<Result<LoginResponseWithRefreshDto>> Login(LoginUserDto loginUserDto);
-        public Task<Result<RefreshSessionResponseDto>> Refresh(string oldRefreshToken);
-        public Task<Result<MessageResponseDto>> Logout(string refreshToken, Guid userId);
+        public Task<Result<LoginWithRefreshResponseDto>> LoginAsync(LoginRequestDto loginUserDto);
+        public Task<Result<RefreshSessionResponseDto>> RefreshAsync(string oldRefreshToken);
+        public Task<Result<MessageResponseDto>> LogoutAsync(string refreshToken, Guid userId);
     }
 }

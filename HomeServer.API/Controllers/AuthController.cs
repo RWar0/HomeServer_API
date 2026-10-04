@@ -33,9 +33,9 @@ namespace HomeServer.API.Controllers
 
         [EnableRateLimiting(RateLimitingConstants.Login)]
         [HttpPost("login")]
-        public async Task<ActionResult<LoginResponseDto>> Login(LoginUserDto loginUserDto)
+        public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto loginUserDto)
         {
-            var response = await _authService.Login(loginUserDto);
+            var response = await _authService.LoginAsync(loginUserDto);
 
             // Validate if response success
             if (response.IsFailure)
@@ -63,7 +63,7 @@ namespace HomeServer.API.Controllers
                 return Unauthorized("Brak tokenu odświeżającego.");
             }
 
-            var response = await _authService.Refresh(refreshToken);
+            var response = await _authService.RefreshAsync(refreshToken);
 
             if (response.IsFailure)
             {
@@ -91,7 +91,7 @@ namespace HomeServer.API.Controllers
                 return Unauthorized("Brak tokenu odświeżającego.");
             }
 
-            var response = await _authService.Logout(refreshToken, _currentUserService.UserId);
+            var response = await _authService.LogoutAsync(refreshToken, _currentUserService.UserId);
 
             // Invalidates user's refresh token - invalidates session!
             if (response.IsSuccess)
@@ -109,7 +109,7 @@ namespace HomeServer.API.Controllers
             return new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
+                Secure = _env.IsProduction(),
                 SameSite = SameSiteMode.Lax,
                 Expires = forDelete ? null : DateTimeOffset.UtcNow.AddMinutes(_jwtOptions.Refresh.DurationInMinutes),
                 MaxAge = forDelete ? null : TimeSpan.FromMinutes(_jwtOptions.Refresh.DurationInMinutes),
