@@ -4,8 +4,10 @@ using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.CalendarEvent;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.CustomEvents;
+using HomeServer.Application.Dtos.Dashboar;
 using HomeServer.Application.Interfaces.Calendar;
 using HomeServer.Application.Interfaces.CustomEvents;
+using HomeServer.Application.Interfaces.Dashboard;
 using HomeServer.Domain.Enums;
 using HomeServer.Domain.Models;
 using HomeServer.Infrastructure.Data;
@@ -14,7 +16,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.CustomEvents
 {
-    public class CustomEventsService : BaseService, ICustomEventsService, ICalendarEventProvider
+    public class CustomEventsService : BaseService, ICustomEventsService, ICalendarEventProvider, IDashboardProvider
     {
         public CustomEventsService(MyDbContext context, ILogger<CustomEventsService> logger) : base(context, logger) { }
 
@@ -234,6 +236,116 @@ namespace HomeServer.Application.Services.CustomEvents
                 _logger.LogError(ex, "Cannot delete event with Id: {CustomEventId}", customEventId);
                 return Result.Failure("Nie można usunąć wydarzenia!", ProblemType.InternalServerError);
             }
+        }
+
+        // Dashboard Provider
+        public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(CancellationToken ct)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var counts = await _context.CustomEvents
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    TodayEventsCount = g.Count(x => x.Date == today),
+                    TodayCompletedEventsCount = g.Count(x => x.Date == today && x.CompletionDate == today),
+                    OverdueEventsCount = g.Count(x => x.Date < today && x.CompletionDate == null)
+                })
+                .FirstOrDefaultAsync(ct);
+
+            var nextEvent = await _context.CustomEvents
+                .Where(x => x.Date >= today && x.CompletionDate == null)
+                .OrderBy(x => x.Date)
+                .Select(x => new { x.Title, x.Date })
+                .FirstOrDefaultAsync(ct);
+
+            return new DashboardSummaryDto
+            {
+                TodayEventsCount = counts?.TodayEventsCount ?? 0,
+                OverdueEventsCount = counts?.OverdueEventsCount ?? 0,
+                TodayCompletedEventsCount = counts?.TodayCompletedEventsCount ?? 0,
+                RemainingDaysToNextEvent = nextEvent is not null
+                    ? nextEvent.Date.DayNumber - today.DayNumber
+                    : null,
+                RemainingEventTitle = nextEvent?.Title
+            };
+        }
+
+        public async Task<IEnumerable<DashboardAttentionItemDto>> GetDashboardAttentionItemsAsync(int limit, CancellationToken ct)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var overdueAttentionItems = await _context.CustomEvents
+                .Where(item => item.Date < today && item.CompletionDate == null)
+                .OrderByDescending(item => item.Date)
+                .Take(limit)
+                .Select(item => new DashboardAttentionItemDto
+                {
+                    Id = item.Id,
+                    Category = item.Category.ToString(),
+                    Title = item.Title,
+                    Date = item.Date
+                })
+                .ToListAsync(ct);
+
+            var futureAttentionItems = await _context.CustomEvents
+                .Where(item => item.Date >= today)
+                .OrderBy(item => item.Date)
+                .Take(limit)
+                .Select(item => new DashboardAttentionItemDto
+                {
+                    Id = item.Id,
+                    Category = item.Category.ToString(),
+                    Title = item.Title,
+                    CompletionDate = item.CompletionDate,
+                    Date = item.Date
+                })
+                .ToListAsync(ct);
+
+            var attentionItems = overdueAttentionItems.Concat(futureAttentionItems).Take(limit);
+
+            return attentionItems;
+        }
+
+        public async Task<IEnumerable<DashboardUpcomingEventDto>> GetDashboardUpcomingEventsAsync(int limit, CancellationToken ct)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var events = await _context.CustomEvents
+                .Where(item => item.Date > today)
+                .OrderBy(item => item.Date)
+                .Take(limit)
+                .Select(item => new DashboardUpcomingEventDto
+                {
+                    Id = item.Id,
+                    Category = item.Category.ToString(),
+                    Title = item.Title,
+                    Date = item.Date,
+                    Time = item.Time.ToString()
+                })
+                .ToListAsync(ct);
+
+            return events;
+        }
+
+        public async Task<IEnumerable<DashboardRecentActivityDto>> GetDashboardRecentActivitiesAsync(int limit, CancellationToken ct)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var activities = await _context.CustomEvents
+                .Where(item => item.Date <= today && item.CompletionDate != null)
+                .OrderByDescending(item => item.Date)
+                .Take(limit)
+                .Select(item => new DashboardRecentActivityDto
+                {
+                    Id = item.Id,
+                    Category = item.Category.ToString(),
+                    Title = item.Title,
+                    Date = item.Date,
+                })
+                .ToListAsync(ct);
+
+            return activities;
         }
 
         // Helpers

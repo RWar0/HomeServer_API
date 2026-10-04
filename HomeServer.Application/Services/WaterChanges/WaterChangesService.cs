@@ -3,9 +3,11 @@ using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.CalendarEvent;
 using HomeServer.Application.Dtos.Common;
+using HomeServer.Application.Dtos.Dashboar;
 using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.WaterChanges;
 using HomeServer.Application.Interfaces.Calendar;
+using HomeServer.Application.Interfaces.Dashboard;
 using HomeServer.Application.Interfaces.WaterChanges;
 using HomeServer.Domain.Enums;
 using HomeServer.Domain.Models;
@@ -15,7 +17,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.WaterChanges
 {
-    public class WaterChangesService : BaseService, IWaterChangesService, ICalendarEventProvider
+    public class WaterChangesService : BaseService, IWaterChangesService, ICalendarEventProvider, IDashboardProvider
     {
         public WaterChangesService(MyDbContext context, ILogger<WaterChangesService> logger) : base(context, logger) { }
 
@@ -330,6 +332,62 @@ namespace HomeServer.Application.Services.WaterChanges
             }
         }
 
+        // Dashboard Provider
+        public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(CancellationToken ct)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var counts = await _context.WaterChanges
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    TodayEventsCount = g.Count(x => x.ChangeDate == today),
+                    TodayCompletedEventsCount = g.Count(x => x.ChangeDate == today),
+                })
+                .FirstOrDefaultAsync(ct);
+
+            return new DashboardSummaryDto
+            {
+                TodayEventsCount = counts?.TodayEventsCount ?? 0,
+                OverdueEventsCount = 0,
+                TodayCompletedEventsCount = counts?.TodayCompletedEventsCount ?? 0,
+                RemainingDaysToNextEvent = null,
+                RemainingEventTitle = null,
+            };
+        }
+
+        public async Task<IEnumerable<DashboardAttentionItemDto>> GetDashboardAttentionItemsAsync(int limit, CancellationToken ct)
+        {
+            return [];
+        }
+
+        public async Task<IEnumerable<DashboardUpcomingEventDto>> GetDashboardUpcomingEventsAsync(int limit, CancellationToken ct)
+        {
+            return [];
+        }
+
+        public async Task<IEnumerable<DashboardRecentActivityDto>> GetDashboardRecentActivitiesAsync(int limit, CancellationToken ct)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var activities = await _context.WaterChanges
+                .Where(item => item.ChangeDate <= today)
+                .OrderByDescending(item => item.ChangeDate)
+                .Take(limit)
+                .Select(item => new DashboardRecentActivityDto
+                {
+                    Id = item.Id,
+                    Category = CalendarEventCategoryEnum.Aquarium.ToString(),
+                    Title = $"Podmiana wody w akwarium: {item.Aquarium.Name}",
+                    Date = item.ChangeDate,
+                })
+                .ToListAsync(ct);
+
+            return activities;
+        }
+
+
+        // Helpers
         private static IQueryable<WaterChange> ApplySortingForWaterChange(IQueryable<WaterChange> query, PaginationRequestDto paginationDto)
         {
             return paginationDto.SortBy?.ToLower() switch

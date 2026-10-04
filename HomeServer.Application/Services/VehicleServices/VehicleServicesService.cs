@@ -3,10 +3,12 @@ using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.CalendarEvent;
 using HomeServer.Application.Dtos.Common;
+using HomeServer.Application.Dtos.Dashboar;
 using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.VehicleServiceItems;
 using HomeServer.Application.Dtos.VehicleServices;
 using HomeServer.Application.Interfaces.Calendar;
+using HomeServer.Application.Interfaces.Dashboard;
 using HomeServer.Application.Interfaces.VehicleServices;
 using HomeServer.Domain.Enums;
 using HomeServer.Domain.Models;
@@ -16,7 +18,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.VehicleServices
 {
-    public class VehicleServicesService : BaseService, IVehicleServicesService, ICalendarEventProvider
+    public class VehicleServicesService : BaseService, IVehicleServicesService, ICalendarEventProvider, IDashboardProvider
     {
         public VehicleServicesService(MyDbContext context, ILogger<VehicleServicesService> logger) : base(context, logger)
         { }
@@ -389,6 +391,61 @@ namespace HomeServer.Application.Services.VehicleServices
                 return Result.Failure("Nie można usunąć serwisu pojazdu!", ProblemType.InternalServerError);
             }
         }
+
+        // Dashboard Provider
+        public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(CancellationToken ct)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var counts = await _context.VehicleServices
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    TodayEventsCount = g.Count(x => x.Date == today),
+                    TodayCompletedEventsCount = g.Count(x => x.Date == today),
+                })
+                .FirstOrDefaultAsync(ct);
+
+            return new DashboardSummaryDto
+            {
+                TodayEventsCount = counts?.TodayEventsCount ?? 0,
+                OverdueEventsCount = 0,
+                TodayCompletedEventsCount = counts?.TodayCompletedEventsCount ?? 0,
+                RemainingDaysToNextEvent = null,
+                RemainingEventTitle = null,
+            };
+        }
+
+        public async Task<IEnumerable<DashboardAttentionItemDto>> GetDashboardAttentionItemsAsync(int limit, CancellationToken ct)
+        {
+            return [];
+        }
+
+        public async Task<IEnumerable<DashboardUpcomingEventDto>> GetDashboardUpcomingEventsAsync(int limit, CancellationToken ct)
+        {
+            return [];
+        }
+
+        public async Task<IEnumerable<DashboardRecentActivityDto>> GetDashboardRecentActivitiesAsync(int limit, CancellationToken ct)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var activities = await _context.VehicleServices
+                .Where(item => item.Date <= today)
+                .OrderByDescending(item => item.Date)
+                .Take(limit)
+                .Select(item => new DashboardRecentActivityDto
+                {
+                    Id = item.Id,
+                    Category = CalendarEventCategoryEnum.Vehicle.ToString(),
+                    Title = $"Serwis pojazdu: {item.Vehicle.Brand} {item.Vehicle.Model}",
+                    Date = item.Date,
+                })
+                .ToListAsync(ct);
+
+            return activities;
+        }
+
 
         // Helpers
         private static VehicleService CreateVehicleService(Guid vehicleId, string title, DateOnly date, decimal? cost, int? mileage, IEnumerable<CreateVehicleServiceItemDto> items)

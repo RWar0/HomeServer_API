@@ -3,9 +3,11 @@ using HomeServer.Application.Common.Enums;
 using HomeServer.Application.Common.Results;
 using HomeServer.Application.Dtos.CalendarEvent;
 using HomeServer.Application.Dtos.Common;
+using HomeServer.Application.Dtos.Dashboar;
 using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Dtos.ParameterChecks;
 using HomeServer.Application.Interfaces.Calendar;
+using HomeServer.Application.Interfaces.Dashboard;
 using HomeServer.Application.Interfaces.ParameterChecks;
 using HomeServer.Domain.Enums;
 using HomeServer.Domain.Models;
@@ -15,7 +17,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HomeServer.Application.Services.ParameterChecks
 {
-    public class ParameterChecksService : BaseService, IParameterChecksService, ICalendarEventProvider
+    public class ParameterChecksService : BaseService, IParameterChecksService, ICalendarEventProvider, IDashboardProvider
     {
         public ParameterChecksService(MyDbContext context, ILogger<ParameterChecksService> logger) : base(context, logger)
         {
@@ -363,6 +365,62 @@ namespace HomeServer.Application.Services.ParameterChecks
                 return Result.Failure("Można usunąć pomiaru parametrów z podanym identyfikatorem!", ProblemType.InternalServerError);
             }
         }
+
+
+        // Dashboard Provider
+        public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(CancellationToken ct)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var counts = await _context.ParameterChecks
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    TodayEventsCount = g.Count(x => x.MeasuredAt == today),
+                    TodayCompletedEventsCount = g.Count(x => x.MeasuredAt == today),
+                })
+                .FirstOrDefaultAsync(ct);
+
+            return new DashboardSummaryDto
+            {
+                TodayEventsCount = counts?.TodayEventsCount ?? 0,
+                OverdueEventsCount = 0,
+                TodayCompletedEventsCount = counts?.TodayCompletedEventsCount ?? 0,
+                RemainingDaysToNextEvent = null,
+                RemainingEventTitle = null,
+            };
+        }
+
+        public async Task<IEnumerable<DashboardAttentionItemDto>> GetDashboardAttentionItemsAsync(int limit, CancellationToken ct)
+        {
+            return [];
+        }
+
+        public async Task<IEnumerable<DashboardUpcomingEventDto>> GetDashboardUpcomingEventsAsync(int limit, CancellationToken ct)
+        {
+            return [];
+        }
+
+        public async Task<IEnumerable<DashboardRecentActivityDto>> GetDashboardRecentActivitiesAsync(int limit, CancellationToken ct)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var activities = await _context.ParameterChecks
+                .Where(item => item.MeasuredAt <= today)
+                .OrderByDescending(item => item.MeasuredAt)
+                .Take(limit)
+                .Select(item => new DashboardRecentActivityDto
+                {
+                    Id = item.Id,
+                    Category = CalendarEventCategoryEnum.Aquarium.ToString(),
+                    Title = $"Podmiana wody w akwarium: {item.Aquarium.Name}",
+                    Date = item.MeasuredAt,
+                })
+                .ToListAsync(ct);
+
+            return activities;
+        }
+
 
         // Helpers
         private static IQueryable<ParameterCheck> ApplySortingForParameterChecks(IQueryable<ParameterCheck> query, PaginationRequestDto paginationDto)
