@@ -61,6 +61,13 @@ namespace HomeServer.API.Controllers
 
             return result.ToActionResult(this);
         }
+        [HttpPatch("{customEventId}/mark-not-done")]
+        public async Task<IActionResult> MarkNotDoneAsync(Guid customEventId)
+        {
+            var result = await _customEventsService.MarkNotDoneAsync(customEventId, _currentUserService.UserId);
+
+            return result.ToActionResult(this);
+        }
 
         [HttpDelete("{customEventId}")]
         public async Task<IActionResult> DeleteAsync(Guid customEventId)

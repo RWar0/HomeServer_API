@@ -173,6 +173,42 @@ namespace HomeServer.Application.Services.CustomEvents
             }
         }
 
+        public async Task<Result<MessageResponseDto>> MarkNotDoneAsync(Guid customEventId, Guid updatedByUserId)
+        {
+            try
+            {
+                var customEvent = await _context.CustomEvents
+                    .Where(item => item.Id == customEventId)
+                    .FirstOrDefaultAsync();
+
+                if (customEvent is null)
+                {
+                    return Result.Failure("Nie znaleziono wydarzenia z podanym identyfikatorem!", ProblemType.NotFound);
+                }
+
+                if (customEvent.CompletionDate is null)
+                {
+                    return Result.Failure("Wydarzenie jest oznaczone jako niewykonane!", ProblemType.BadRequest);
+                }
+
+                customEvent.CompletionDate = null;
+                customEvent.UpdatedByUserId = updatedByUserId;
+
+
+                await _context.SaveChangesAsync();
+
+                return Result.Success(new MessageResponseDto
+                {
+                    Message = $"Wydarzenie \"{customEvent.Title}\" zostało oznaczone jako niewykonane!"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot mark as not done event with Id: {CustomEventId}", customEventId);
+                return Result.Failure("Nie można oznaczyć wydarzenia jako niewykonanego!", ProblemType.InternalServerError);
+            }
+        }
+
         public async Task<Result<MessageResponseDto>> UpdateAsync(Guid customEventId, UpdateCustomEventDto updateDto, Guid updatedByUserId)
         {
             try

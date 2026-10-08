@@ -68,7 +68,11 @@ namespace HomeServer.Application.Services.Aquariums
                         LastWaterChange = item.WaterChanges
                             .OrderByDescending(waterChange => waterChange.ChangeDate)
                             .Select(waterChange => (DateOnly?)waterChange.ChangeDate)
-                            .FirstOrDefault()
+                            .FirstOrDefault(),
+                        LastParameterCheck = item.ParameterChecks
+                            .OrderByDescending(parameterCheck => parameterCheck.MeasuredAt)
+                            .Select(parameterCheck => (DateOnly?)parameterCheck.MeasuredAt)
+                            .FirstOrDefault(),
                     })
                     .ToListAsync();
 
