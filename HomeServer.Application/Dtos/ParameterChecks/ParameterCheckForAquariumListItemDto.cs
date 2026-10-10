@@ -8,7 +8,12 @@
         public double? Gh { get; set; }
         public double? No3 { get; set; }
         public double? No2 { get; set; }
+        public double? Nh3 { get; set; }
+        public double? Po4 { get; set; }
+        public double? Fe { get; set; }
         public double? Temperature { get; set; }
+
         public DateOnly MeasuredAt { get; set; }
+        public TimeOnly? MeasuredTime { get; set; }
     }
 }

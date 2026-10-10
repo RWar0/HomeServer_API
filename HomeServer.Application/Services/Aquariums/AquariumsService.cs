@@ -263,10 +263,14 @@ namespace HomeServer.Application.Services.Aquariums
                     {
                         Id = item.Id,
                         MeasuredAt = item.MeasuredAt,
+                        MeasuredTime = item.MeasuredTime,
                         Kh = item.Kh,
                         Gh = item.Gh,
                         No2 = item.No2,
                         No3 = item.No3,
+                        Nh3 = item.Nh3,
+                        Po4 = item.Po4,
+                        Fe = item.Fe,
                         Ph = item.Ph,
                         Temperature = item.Temperature,
                     })
