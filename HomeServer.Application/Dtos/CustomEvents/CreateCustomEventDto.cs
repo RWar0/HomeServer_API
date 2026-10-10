@@ -8,7 +8,9 @@ namespace HomeServer.Application.Dtos.CustomEvents
         [Required(AllowEmptyStrings = false, ErrorMessage = "Nazwa wydarzenia jest wymagana!")]
         public string Title { get; set; } = default!;
 
+        [MaxLength(1024, ErrorMessage = "Opis wydarzenia nie może przekraczać 1024 znaków!")]
         public string? Description { get; set; }
+
         public string? Location { get; set; }
 
         [Required(AllowEmptyStrings = false, ErrorMessage = "Kategoria wydarzenia jest wymagana!")]
