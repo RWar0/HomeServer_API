@@ -442,7 +442,7 @@ namespace HomeServer.Application.Services.ParameterChecks
                 {
                     Id = item.Id,
                     Category = CalendarEventCategoryEnum.Aquarium.ToString(),
-                    Title = $"Podmiana wody w akwarium: {item.Aquarium.Name}",
+                    Title = $"Pomiar parametrów w akwarium: {item.Aquarium.Name}",
                     Date = item.MeasuredAt,
                 })
                 .ToListAsync(ct);

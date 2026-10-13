@@ -1,6 +1,7 @@
 ﻿using HomeServer.API.Common.Extensions;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.CustomEvents;
+using HomeServer.Application.Dtos.Pagination;
 using HomeServer.Application.Interfaces.CustomEvents;
 using HomeServer.Application.Interfaces.UserSession;
 using Microsoft.AspNetCore.Authorization;
@@ -34,6 +35,14 @@ namespace HomeServer.API.Controllers
         public async Task<IActionResult> GetAsync([FromQuery] DateFilterDto filterDto)
         {
             var result = await _customEventsService.GetAsync(filterDto);
+
+            return result.ToActionResult(this);
+        }
+        
+        [HttpGet("list")]
+        public async Task<IActionResult> GetListAsync([FromQuery] PaginationRequestDto paginationDto, [FromQuery] CustomEventFilterDto filterDto)
+        {
+            var result = await _customEventsService.GetListAsync(paginationDto, filterDto);
 
             return result.ToActionResult(this);
         }

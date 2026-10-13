@@ -5,6 +5,8 @@ using HomeServer.Application.Dtos.CalendarEvent;
 using HomeServer.Application.Dtos.Common;
 using HomeServer.Application.Dtos.CustomEvents;
 using HomeServer.Application.Dtos.Dashboar;
+using HomeServer.Application.Dtos.Pagination;
+using HomeServer.Application.Dtos.ParameterChecks;
 using HomeServer.Application.Interfaces.Calendar;
 using HomeServer.Application.Interfaces.CustomEvents;
 using HomeServer.Application.Interfaces.Dashboard;
@@ -81,6 +83,54 @@ namespace HomeServer.Application.Services.CustomEvents
             }
         }
 
+        public async Task<Result<PagedResult<CustomEventListItemDto>>> GetListAsync(PaginationRequestDto paginationDto, CustomEventFilterDto filterDto)
+        {
+            try
+            {
+                var query = _context.CustomEvents.AsNoTracking().AsQueryable();
+
+                query = FilterCustomEventByFilter(query, filterDto);
+
+                var totalCount = await query.CountAsync();
+
+                query = ApplySortingForCustomEvents(query, paginationDto);
+
+                var customEvents = await query
+                    .Skip((paginationDto.Page - 1) * paginationDto.PageSize)
+                    .Take(paginationDto.PageSize)
+                    .Select(item => new CustomEventListItemDto
+                    {
+                        Id = item.Id,
+                        Title = item.Title,
+                        Description = item.Description,
+                        Location = item.Location,
+                        Category = item.Category.ToString(),
+                        Date = item.Date,
+                        Time = item.Time,
+                        CompletionDate = item.CompletionDate,
+                    })
+                    .ToListAsync();
+
+                return Result<PagedResult<CustomEventListItemDto>>.Success(new()
+                {
+                    Data = customEvents,
+                    Pagination = new()
+                    {
+                        Page = paginationDto.Page,
+                        PageSize = paginationDto.PageSize,
+                        TotalCount = totalCount,
+                        SortBy = paginationDto.SortBy,
+                        SortDirection = paginationDto.SortDirection,
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot get custom events!");
+                return Result.Failure("Nie można pobrać wydarzeń!", ProblemType.InternalServerError);
+            }
+        }
+
         public async Task<IEnumerable<CalendarEventDto>> GetCalendarEventsAsync(DateFilterDto filterDto, CancellationToken ct)
         {
             var items = await _context.CustomEvents
@@ -101,7 +151,6 @@ namespace HomeServer.Application.Services.CustomEvents
 
             return items;
         }
-
 
         public async Task<Result<CalendarEventDto>> GetByIdAsync(Guid customEventId)
         {
@@ -397,5 +446,88 @@ namespace HomeServer.Application.Services.CustomEvents
                 item.Date >= fromDate.AddDays(-7) &&
                 item.Date <= toDate.AddDays(7));
         }
+
+        private static IQueryable<CustomEvent> ApplySortingForCustomEvents(IQueryable<CustomEvent> query, PaginationRequestDto paginationDto)
+        {
+            return paginationDto.SortBy?.ToLower() switch
+            {
+                "title" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Title)
+                    : query.OrderBy(x => x.Title),
+
+                "date" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Date)
+                    : query.OrderBy(x => x.Date),
+
+                "category" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderByDescending(x => x.Category)
+                    : query.OrderBy(x => x.Category),
+
+                "completiondate" => paginationDto.SortDirection == SortDirection.Desc
+                    ? query.OrderBy(x => x.CompletionDate == null).ThenByDescending(x => x.CompletionDate).ThenByDescending(x => x.Date)
+                    : query.OrderByDescending(x => x.CompletionDate == null).ThenBy(x => x.CompletionDate).ThenBy(x => x.Date),
+
+                _ => query.OrderByDescending(x => x.Date).ThenBy(x => x.Title)
+            };
+        }
+
+        private static IQueryable<CustomEvent> FilterCustomEventByFilter(IQueryable<CustomEvent> query, CustomEventFilterDto filterDto)
+        {
+            if (!string.IsNullOrWhiteSpace(filterDto.Title))
+            {
+                query = query.Where(v => EF.Functions.ILike(v.Title, $"%{filterDto.Title}%"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filterDto.Description))
+            {
+                query = query.Where(v => v.Description != null && EF.Functions.ILike(v.Description, $"%{filterDto.Description}%"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filterDto.Location))
+            {
+                query = query.Where(v => v.Location != null && EF.Functions.ILike(v.Location, $"%{filterDto.Location}%"));
+            }
+
+            if (filterDto.Category.HasValue)
+            {
+                query = query.Where(item => item.Category == filterDto.Category);
+            }
+
+            if (filterDto.FromDate.HasValue)
+            {
+                query = query.Where(item => item.Date >= filterDto.FromDate.Value.AddDays(1));
+            }
+
+            if (filterDto.ToDate.HasValue)
+            {
+                query = query.Where(item => item.Date <= filterDto.ToDate.Value.AddDays(1));
+            }
+
+            if (filterDto.IsCompleted.HasValue)
+            {
+                switch (filterDto.IsCompleted)
+                {
+                    case true:
+                        query = query.Where(item => item.CompletionDate != null);
+                        break;
+                    case false:
+                        query = query.Where(item => item.CompletionDate == null);
+                        break;
+                }
+            }
+
+            if (filterDto.FromCompletionDate.HasValue)
+            {
+                query = query.Where(item => item.CompletionDate >= filterDto.FromCompletionDate.Value.AddDays(1));
+            }
+
+            if (filterDto.ToCompletionDate.HasValue)
+            {
+                query = query.Where(item => item.CompletionDate <= filterDto.ToCompletionDate.Value.AddDays(1));
+            }
+
+            return query;
+        }
+
     }
 }
