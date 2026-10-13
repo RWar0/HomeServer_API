@@ -5,6 +5,7 @@ using HomeServer.API.Middleware.ExceptionHandling;
 using HomeServer.Application.Configuration.Jwt;
 using HomeServer.Application.Interfaces.Aquariums;
 using HomeServer.Application.Interfaces.Auth;
+using HomeServer.Application.Interfaces.Calculators;
 using HomeServer.Application.Interfaces.Calendar;
 using HomeServer.Application.Interfaces.CustomEvents;
 using HomeServer.Application.Interfaces.Dashboard;
@@ -19,6 +20,7 @@ using HomeServer.Application.Interfaces.VehicleServices;
 using HomeServer.Application.Interfaces.WaterChanges;
 using HomeServer.Application.Services.Aquariums;
 using HomeServer.Application.Services.Auth;
+using HomeServer.Application.Services.Calculators;
 using HomeServer.Application.Services.Calendar;
 using HomeServer.Application.Services.CustomEvents;
 using HomeServer.Application.Services.Dashboard;
@@ -154,6 +156,7 @@ namespace HomeServer.API
             builder.Services.AddScoped<IDashboardProvider, CustomEventsService>();
 
             builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<ICalculatorsService, CalculatorsService>();
             #endregion
 
             #region CORS Policies - Dev and Prod

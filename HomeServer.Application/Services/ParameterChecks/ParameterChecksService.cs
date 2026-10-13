@@ -44,12 +44,16 @@ namespace HomeServer.Application.Services.ParameterChecks
                     AquariumId = createDto.AquariumId,
                     Aquarium = aquarium,
                     MeasuredAt = createDto.MeasuredAt,
+                    MeasuredTime = createDto.MeasuredTime,
                     Temperature = createDto.Temperature,
                     Ph = createDto.Ph,
                     Kh = createDto.Kh,
                     Gh = createDto.Gh,
                     No2 = createDto.No2,
                     No3 = createDto.No3,
+                    Nh3 = createDto.Nh3,
+                    Po4 = createDto.Po4,
+                    Fe = createDto.Fe,
                 });
 
                 await _context.SaveChangesAsync();
@@ -87,12 +91,16 @@ namespace HomeServer.Application.Services.ParameterChecks
                     AquariumId = aquariumId,
                     Aquarium = aquarium,
                     MeasuredAt = createDto.MeasuredAt,
+                    MeasuredTime = createDto.MeasuredTime,
                     Temperature = createDto.Temperature,
                     Ph = createDto.Ph,
                     Kh = createDto.Kh,
                     Gh = createDto.Gh,
                     No2 = createDto.No2,
                     No3 = createDto.No3,
+                    Nh3 = createDto.Nh3,
+                    Po4 = createDto.Po4,
+                    Fe = createDto.Fe,
                 });
 
                 await _context.SaveChangesAsync();
@@ -129,11 +137,15 @@ namespace HomeServer.Application.Services.ParameterChecks
                     {
                         Id = item.Id,
                         MeasuredAt = item.MeasuredAt,
+                        MeasuredTime = item.MeasuredTime,
                         Ph = item.Ph,
                         Gh = item.Gh,
                         Kh = item.Kh,
                         No2 = item.No2,
                         No3 = item.No3,
+                        Nh3 = item.Nh3,
+                        Po4 = item.Po4,
+                        Fe = item.Fe,
                         Temperature = item.Temperature,
                         AquariumId = item.Aquarium.Id,
                         AquariumName = item.Aquarium.Name,
@@ -175,7 +187,8 @@ namespace HomeServer.Application.Services.ParameterChecks
                         $"Kh: {GetValueOrDash(item.Kh)} \n" +
                         $"No2: {GetValueOrDash(item.No2)} \n" +
                         $"No3: {GetValueOrDash(item.No3)} \n" +
-                        $"Temperatura: {GetValueOrDash(item.Temperature)}",
+                        $"Temperatura: {GetValueOrDash(item.Temperature)} \n" +
+                        GetValueWithLabelIfExists(item.MeasuredTime, "Godzina pomiaru"),
                     Location = $"Akwarium {item.Aquarium.Name}",
                     Date = item.MeasuredAt,
                     Time = null,
@@ -197,11 +210,15 @@ namespace HomeServer.Application.Services.ParameterChecks
                     {
                         Id = parameterCheckId,
                         MeasuredAt = item.MeasuredAt,
+                        MeasuredTime = item.MeasuredTime,
                         Ph = item.Ph,
                         Gh = item.Gh,
                         Kh = item.Kh,
                         No2 = item.No2,
                         No3 = item.No3,
+                        Nh3 = item.Nh3,
+                        Po4 = item.Po4,
+                        Fe = item.Fe,
                         Temperature = item.Temperature,
                         AquariumName = item.Aquarium.Name,
                     })
@@ -231,11 +248,15 @@ namespace HomeServer.Application.Services.ParameterChecks
                         Id = parameterCheckId,
                         AquariumId = item.AquariumId,
                         MeasuredAt = item.MeasuredAt,
+                        MeasuredTime = item.MeasuredTime,
                         Ph = item.Ph,
                         Gh = item.Gh,
                         Kh = item.Kh,
                         No2 = item.No2,
                         No3 = item.No3,
+                        Nh3 = item.Nh3,
+                        Po4 = item.Po4,
+                        Fe = item.Fe,
                         Temperature = item.Temperature,
                     })
                     .FirstOrDefaultAsync();
@@ -280,12 +301,16 @@ namespace HomeServer.Application.Services.ParameterChecks
                 parameterCheck.AquariumId = updateDto.AquariumId;
                 parameterCheck.Aquarium = aquarium;
                 parameterCheck.MeasuredAt = updateDto.MeasuredAt;
+                parameterCheck.MeasuredTime = updateDto.MeasuredTime;
                 parameterCheck.Temperature = updateDto.Temperature;
                 parameterCheck.Ph = updateDto.Ph;
                 parameterCheck.Kh = updateDto.Kh;
                 parameterCheck.Gh = updateDto.Gh;
                 parameterCheck.No2 = updateDto.No2;
                 parameterCheck.No3 = updateDto.No3;
+                parameterCheck.Nh3 = updateDto.Nh3;
+                parameterCheck.Po4 = updateDto.Po4;
+                parameterCheck.Fe = updateDto.Fe;
 
                 await _context.SaveChangesAsync();
 
@@ -318,12 +343,16 @@ namespace HomeServer.Application.Services.ParameterChecks
                 }
 
                 parameterCheck.MeasuredAt = updateDto.MeasuredAt;
+                parameterCheck.MeasuredTime = updateDto.MeasuredTime;
                 parameterCheck.Temperature = updateDto.Temperature;
                 parameterCheck.Ph = updateDto.Ph;
                 parameterCheck.Kh = updateDto.Kh;
                 parameterCheck.Gh = updateDto.Gh;
                 parameterCheck.No2 = updateDto.No2;
                 parameterCheck.No3 = updateDto.No3;
+                parameterCheck.Nh3 = updateDto.Nh3;
+                parameterCheck.Po4 = updateDto.Po4;
+                parameterCheck.Fe = updateDto.Fe;
 
                 await _context.SaveChangesAsync();
 
@@ -413,7 +442,7 @@ namespace HomeServer.Application.Services.ParameterChecks
                 {
                     Id = item.Id,
                     Category = CalendarEventCategoryEnum.Aquarium.ToString(),
-                    Title = $"Podmiana wody w akwarium: {item.Aquarium.Name}",
+                    Title = $"Pomiar parametrów w akwarium: {item.Aquarium.Name}",
                     Date = item.MeasuredAt,
                 })
                 .ToListAsync(ct);
@@ -482,6 +511,16 @@ namespace HomeServer.Application.Services.ParameterChecks
         private static string GetValueOrDash(object? a)
         {
             return a?.ToString() ?? "-";
+        }
+
+        private static string GetValueWithLabelIfExists(object? a, string label)
+        {
+            if (a is null)
+            {
+                return string.Empty;
+            }
+
+            return $"{label}: {a} \n";
         }
     }
 }

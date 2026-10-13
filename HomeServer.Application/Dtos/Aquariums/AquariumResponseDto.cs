@@ -7,6 +7,7 @@
         public int Volume { get; set; }
         public DateOnly CreationDate { get; set; }
         public DateOnly? LastWaterChange { get; set; }
+        public DateOnly? LastParameterCheck { get; set; }
         public Guid? LastPhotoId { get; set; }
     }
 }

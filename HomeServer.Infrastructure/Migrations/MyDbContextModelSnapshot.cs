@@ -121,6 +121,9 @@ namespace HomeServer.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<double?>("Fe")
+                        .HasColumnType("double precision");
+
                     b.Property<double?>("Gh")
                         .HasColumnType("double precision");
 
@@ -130,6 +133,12 @@ namespace HomeServer.Infrastructure.Migrations
                     b.Property<DateOnly>("MeasuredAt")
                         .HasColumnType("date");
 
+                    b.Property<TimeOnly?>("MeasuredTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<double?>("Nh3")
+                        .HasColumnType("double precision");
+
                     b.Property<double?>("No2")
                         .HasColumnType("double precision");
 
@@ -137,6 +146,9 @@ namespace HomeServer.Infrastructure.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<double?>("Ph")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Po4")
                         .HasColumnType("double precision");
 
                     b.Property<double?>("Temperature")

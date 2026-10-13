@@ -20,12 +20,23 @@ namespace HomeServer.Application.Dtos.ParameterChecks
         [Range(0, 100, ErrorMessage = "NO2 musi być w zakresie 0-100")]
         public double? No2 { get; set; }
 
+        [Range(0, 20, ErrorMessage = "NH3 musi być w zakresie 0-20")]
+        public double? Nh3 { get; set; }
+
+        [Range(0, 10, ErrorMessage = "PO4 musi być w zakresie 0-10")]
+        public double? Po4 { get; set; }
+
+        [Range(0, 10, ErrorMessage = "FE musi być w zakresie 0-10")]
+        public double? Fe { get; set; }
+
         [Range(0, 100, ErrorMessage = "Temperatura musi być w zakresie 0-100")]
         public double? Temperature { get; set; }
 
         [Required(AllowEmptyStrings = false, ErrorMessage = "Data pomiaru jest wymagana!")]
         [NotFutureDate(Name = "Data pomiaru")]
         public DateOnly MeasuredAt { get; set; }
+
+        public TimeOnly? MeasuredTime { get; set; }
 
         [Required(AllowEmptyStrings = false, ErrorMessage = "Akwarium jest wymagane!")]
         public Guid AquariumId { get; set; }
